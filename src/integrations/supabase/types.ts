@@ -14,16 +14,397 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      avaliacoes: {
+        Row: {
+          chamado_id: string
+          data_avaliacao: string
+          feedback_texto: string | null
+          id: string
+          nota: number
+        }
+        Insert: {
+          chamado_id: string
+          data_avaliacao?: string
+          feedback_texto?: string | null
+          id?: string
+          nota: number
+        }
+        Update: {
+          chamado_id?: string
+          data_avaliacao?: string
+          feedback_texto?: string | null
+          id?: string
+          nota?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: true
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamados: {
+        Row: {
+          atendente_id: string | null
+          data_atualizacao: string
+          data_criacao: string
+          departamento_id: string
+          empresa_solicitante_id: string | null
+          gestor_aprovador_id: string | null
+          id: string
+          mensagem_inicial: string | null
+          protocolo: string | null
+          solicitante_id: string
+          status: Database["public"]["Enums"]["chamado_status"]
+          topico_id: string
+        }
+        Insert: {
+          atendente_id?: string | null
+          data_atualizacao?: string
+          data_criacao?: string
+          departamento_id: string
+          empresa_solicitante_id?: string | null
+          gestor_aprovador_id?: string | null
+          id?: string
+          mensagem_inicial?: string | null
+          protocolo?: string | null
+          solicitante_id: string
+          status?: Database["public"]["Enums"]["chamado_status"]
+          topico_id: string
+        }
+        Update: {
+          atendente_id?: string | null
+          data_atualizacao?: string
+          data_criacao?: string
+          departamento_id?: string
+          empresa_solicitante_id?: string | null
+          gestor_aprovador_id?: string | null
+          id?: string
+          mensagem_inicial?: string | null
+          protocolo?: string | null
+          solicitante_id?: string
+          status?: Database["public"]["Enums"]["chamado_status"]
+          topico_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_empresa_solicitante_id_fkey"
+            columns: ["empresa_solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_gestor_aprovador_id_fkey"
+            columns: ["gestor_aprovador_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_topico_id_fkey"
+            columns: ["topico_id"]
+            isOneToOne: false
+            referencedRelation: "topicos_suporte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departamentos: {
+        Row: {
+          created_at: string
+          gestor_id: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departamentos_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      mensagens_chamado: {
+        Row: {
+          chamado_id: string
+          data_envio: string
+          id: string
+          mensagem: string
+          usuario_id: string
+        }
+        Insert: {
+          chamado_id: string
+          data_envio?: string
+          id?: string
+          mensagem: string
+          usuario_id: string
+        }
+        Update: {
+          chamado_id?: string
+          data_envio?: string
+          id?: string
+          mensagem?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_chamado_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chamado_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfis_usuarios: {
+        Row: {
+          created_at: string
+          email: string
+          empresa_id: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          empresa_id?: string | null
+          id: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perguntas_triagem: {
+        Row: {
+          created_at: string
+          id: string
+          opcoes: string[] | null
+          ordem: number
+          pergunta_texto: string
+          tipo_campo: Database["public"]["Enums"]["tipo_campo"]
+          topico_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opcoes?: string[] | null
+          ordem?: number
+          pergunta_texto: string
+          tipo_campo?: Database["public"]["Enums"]["tipo_campo"]
+          topico_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opcoes?: string[] | null
+          ordem?: number
+          pergunta_texto?: string
+          tipo_campo?: Database["public"]["Enums"]["tipo_campo"]
+          topico_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perguntas_triagem_topico_id_fkey"
+            columns: ["topico_id"]
+            isOneToOne: false
+            referencedRelation: "topicos_suporte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      respostas_triagem: {
+        Row: {
+          chamado_id: string
+          created_at: string
+          id: string
+          pergunta_texto: string
+          resposta_texto: string | null
+        }
+        Insert: {
+          chamado_id: string
+          created_at?: string
+          id?: string
+          pergunta_texto: string
+          resposta_texto?: string | null
+        }
+        Update: {
+          chamado_id?: string
+          created_at?: string
+          id?: string
+          pergunta_texto?: string
+          resposta_texto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respostas_triagem_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topicos_suporte: {
+        Row: {
+          created_at: string
+          departamento_id: string
+          id: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          departamento_id: string
+          id?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          departamento_id?: string
+          id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topicos_suporte_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_empresa: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_dept_gestor: {
+        Args: { _dept_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "solicitante" | "atendente" | "gestor"
+      chamado_status:
+        | "aguardando_aprovacao"
+        | "atribuido"
+        | "concluido"
+        | "aguardando_tratativa"
+        | "aguardando_tratativa_externa"
+        | "aguardando_solicitante"
+        | "reprovado"
+        | "sem_resolucao"
+      tipo_campo: "texto" | "multipla_escolha"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +531,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["solicitante", "atendente", "gestor"],
+      chamado_status: [
+        "aguardando_aprovacao",
+        "atribuido",
+        "concluido",
+        "aguardando_tratativa",
+        "aguardando_tratativa_externa",
+        "aguardando_solicitante",
+        "reprovado",
+        "sem_resolucao",
+      ],
+      tipo_campo: ["texto", "multipla_escolha"],
+    },
   },
 } as const
