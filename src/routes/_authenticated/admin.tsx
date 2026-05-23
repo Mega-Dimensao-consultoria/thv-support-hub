@@ -213,57 +213,64 @@ function Topicos() {
   );
 }
 
-function Usuarios() {
+const SITE_FIELDS: { key: string; label: string; multiline?: boolean }[] = [
+  { key: "hero_badge", label: "Selo (acima do título)" },
+  { key: "hero_title", label: "Título principal", multiline: true },
+  { key: "hero_subtitle", label: "Subtítulo", multiline: true },
+  { key: "hero_cta", label: "Texto do botão (CTA)" },
+  { key: "empresas_title", label: "Título da seção de empresas" },
+  { key: "feature_1_title", label: "Recurso 1 — título" },
+  { key: "feature_1_desc", label: "Recurso 1 — descrição" },
+  { key: "feature_2_title", label: "Recurso 2 — título" },
+  { key: "feature_2_desc", label: "Recurso 2 — descrição" },
+  { key: "feature_3_title", label: "Recurso 3 — título" },
+  { key: "feature_3_desc", label: "Recurso 3 — descrição" },
+  { key: "footer_text", label: "Texto do rodapé" },
+];
+
+function SiteSettings() {
   const qc = useQueryClient();
   const { data } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      const [perfis, roles] = await Promise.all([
-        supabase.from("perfis_usuarios").select("id, nome, email, empresas(nome)").order("nome"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      const map = new Map<string, string[]>();
-      (roles.data ?? []).forEach((r) => {
-        const arr = map.get(r.user_id) ?? [];
-        arr.push(r.role); map.set(r.user_id, arr);
-      });
-      return (perfis.data ?? []).map((p) => ({ ...p, roles: map.get(p.id) ?? [] }));
-    },
+    queryKey: ["site-settings"],
+    queryFn: async () => (await supabase.from("site_settings").select("key, value")).data ?? [],
   });
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
 
-  const toggleRole = async (userId: string, role: "atendente" | "gestor", has: boolean) => {
-    if (has) {
-      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
-    } else {
-      await supabase.from("user_roles").insert({ user_id: userId, role });
-    }
-    qc.invalidateQueries({ queryKey: ["admin-users"] });
+  const get = (k: string) => values[k] ?? data?.find((d) => d.key === k)?.value ?? "";
+
+  const save = async (key: string) => {
+    setSaving(key);
+    const { error } = await supabase.from("site_settings").upsert({ key, value: get(key) });
+    setSaving(null);
+    if (error) return toast.error(error.message);
+    toast.success("Salvo");
+    qc.invalidateQueries({ queryKey: ["site-settings"] });
+    qc.invalidateQueries({ queryKey: ["site-settings-public"] });
   };
 
   return (
     <Card className="mt-4">
-      <CardHeader><CardTitle className="text-base">Usuários e papéis</CardTitle></CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {data?.map((u) => (
-            <div key={u.id} className="flex items-center justify-between border-b last:border-0 py-2 text-sm">
-              <div>
-                <div className="font-medium">{u.nome}</div>
-                <div className="text-xs text-muted-foreground">{u.email} • {u.empresas?.nome ?? "—"}</div>
-              </div>
-              <div className="flex gap-2">
-                {(["atendente", "gestor"] as const).map((r) => {
-                  const has = u.roles.includes(r);
-                  return (
-                    <Button key={r} size="sm" variant={has ? "default" : "outline"} onClick={() => toggleRole(u.id, r, has)}>
-                      {r}
-                    </Button>
-                  );
-                })}
-              </div>
+      <CardHeader>
+        <CardTitle className="text-base">Textos da tela inicial</CardTitle>
+        <p className="text-xs text-muted-foreground">Edite os textos exibidos na página pública do aplicativo. As alterações aparecem imediatamente para os visitantes.</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {SITE_FIELDS.map((f) => (
+          <div key={f.key} className="grid gap-2">
+            <Label htmlFor={f.key}>{f.label}</Label>
+            <div className="flex gap-2">
+              {f.multiline ? (
+                <Textarea id={f.key} rows={2} value={get(f.key)} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+              ) : (
+                <Input id={f.key} value={get(f.key)} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+              )}
+              <Button size="sm" variant="outline" onClick={() => save(f.key)} disabled={saving === f.key}>
+                <Save className="h-4 w-4 mr-1" />Salvar
+              </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
