@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Trash2, Users, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Users, ArrowRight, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -24,7 +25,7 @@ function Admin() {
     <div className="container max-w-5xl mx-auto p-4 md:p-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Configurações</h1>
       {isAdmin && (
-        <Link to="/admin/usuarios" className="mb-4 flex items-center justify-between rounded-md border bg-card p-4 hover:bg-accent transition">
+        <Link to="/usuarios" className="mb-4 flex items-center justify-between rounded-md border bg-card p-4 hover:bg-accent transition">
           <span className="flex items-center gap-2 font-medium"><Users className="h-4 w-4" /> Gestão de usuários, papéis e bloqueios</span>
           <ArrowRight className="h-4 w-4" />
         </Link>
@@ -33,11 +34,11 @@ function Admin() {
         <TabsList>
           <TabsTrigger value="deptos">Departamentos</TabsTrigger>
           <TabsTrigger value="topicos">Tópicos & Triagem</TabsTrigger>
-          {isAdmin && <TabsTrigger value="users">Papéis rápidos</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="site">Tela inicial</TabsTrigger>}
         </TabsList>
         <TabsContent value="deptos"><Departamentos /></TabsContent>
         <TabsContent value="topicos"><Topicos /></TabsContent>
-        {isAdmin && <TabsContent value="users"><Usuarios /></TabsContent>}
+        {isAdmin && <TabsContent value="site"><SiteSettings /></TabsContent>}
       </Tabs>
     </div>
   );
