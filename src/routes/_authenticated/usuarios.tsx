@@ -18,7 +18,7 @@ import { adminListUsers, adminCreateUser, adminUpdateUserRole, adminBlockUser, a
 
 type Role = "solicitante" | "atendente" | "gestor" | "admin";
 
-export const Route = createFileRoute("/_authenticated/admin/usuarios")({
+export const Route = createFileRoute("/_authenticated/usuarios")({
   component: AdminUsuarios,
 });
 
