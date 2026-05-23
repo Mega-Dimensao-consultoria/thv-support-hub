@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { STATUS_LABEL, type ChamadoStatus } from "./status";
+import DOMPurify from "isomorphic-dompurify";
 
 interface ChamadoPdfInput {
   chamado: {
@@ -53,7 +54,7 @@ export async function downloadChamadoPdf({ chamado, respostas, mensagens }: Cham
       ${mensagens.map((m) => `
         <div style="margin-bottom: 14px; font-size: 12px;">
           <div style="color: #666; font-size: 11px;">${m.perfis_usuarios?.nome ?? "Usuário"} — ${format(new Date(m.data_envio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
-          <div style="background: #f5f7fa; border-radius: 6px; padding: 8px 12px; margin-top: 4px;">${m.mensagem}</div>
+          <div style="background: #f5f7fa; border-radius: 6px; padding: 8px 12px; margin-top: 4px;">${DOMPurify.sanitize(m.mensagem)}</div>
         </div>
       `).join("")}
 
