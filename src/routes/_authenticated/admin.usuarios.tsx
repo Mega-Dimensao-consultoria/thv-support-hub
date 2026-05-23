@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, UserPlus, Lock, Unlock, Trash2, Pencil } from "lucide-react";
+import { Loader2, UserPlus, Lock, Unlock, Trash2, Pencil, UserCog } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { adminListUsers, adminCreateUser, adminUpdateUserRole, adminBlockUser, adminRemoveUser } from "@/lib/admin.functions";
+import { adminListUsers, adminCreateUser, adminUpdateUserRole, adminBlockUser, adminRemoveUser, adminUpdateUser } from "@/lib/admin.functions";
 
 type Role = "solicitante" | "atendente" | "gestor" | "admin";
 
@@ -31,6 +31,7 @@ function AdminUsuarios() {
   const updateFn = useServerFn(adminUpdateUserRole);
   const blockFn = useServerFn(adminBlockUser);
   const removeFn = useServerFn(adminRemoveUser);
+  const updateUserFn = useServerFn(adminUpdateUser);
 
   useEffect(() => {
     if (!loading && !roles.includes("admin")) navigate({ to: "/chamados" });
@@ -103,6 +104,16 @@ function AdminUsuarios() {
                           try {
                             await updateFn({ data: { user_id: u.id, ...payload } });
                             toast.success("Papel atualizado"); invalidate(); return true;
+                          } catch (e) { toast.error((e as Error).message); return false; }
+                        }}
+                      />
+                      <EditUserDataDialog
+                        user={u}
+                        empresas={data?.empresas ?? []}
+                        onSave={async (payload) => {
+                          try {
+                            await updateUserFn({ data: { user_id: u.id, ...payload } });
+                            toast.success("Dados atualizados"); invalidate(); return true;
                           } catch (e) { toast.error((e as Error).message); return false; }
                         }}
                       />
@@ -276,6 +287,67 @@ function EditRoleDialog({ user, departamentos, onSave }: {
           <Button disabled={saving} onClick={async () => {
             setSaving(true);
             const ok = await onSave({ role, departamento_ids: role === "gestor" ? deptIds : undefined });
+            setSaving(false);
+            if (ok) setOpen(false);
+          }}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditUserDataDialog({ user, empresas, onSave }: {
+  user: { id: string; nome: string | null; email: string; empresa_id: string | null };
+  empresas: { id: string; nome: string }[];
+  onSave: (p: { nome: string; email: string; empresa_id: string | null; password?: string }) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState(user.nome ?? "");
+  const [email, setEmail] = useState(user.email);
+  const [empresaId, setEmpresaId] = useState<string>(user.empresa_id ?? "");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome(user.nome ?? "");
+      setEmail(user.email);
+      setEmpresaId(user.empresa_id ?? "");
+      setPassword("");
+    }
+  }, [open, user]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><UserCog className="h-4 w-4 mr-1" />Dados</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar dados do usuário</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} /></div>
+          <div><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <div>
+            <Label>Empresa</Label>
+            <Select value={empresaId} onValueChange={setEmpresaId}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>{empresas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Nova senha (opcional)</Label>
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="deixe em branco para manter" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button disabled={saving || !nome || !email} onClick={async () => {
+            setSaving(true);
+            const ok = await onSave({
+              nome, email,
+              empresa_id: empresaId || null,
+              password: password.length >= 8 ? password : undefined,
+            });
             setSaving(false);
             if (ok) setOpen(false);
           }}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar</Button>
