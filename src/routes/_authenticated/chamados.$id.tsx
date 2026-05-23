@@ -13,6 +13,7 @@ import { RichEditor } from "@/components/rich-editor";
 import { toast } from "sonner";
 import { Download, CheckCircle2, X, Send, Loader2, Star } from "lucide-react";
 import { format } from "date-fns";
+import { displayName } from "@/lib/display-name";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -148,7 +149,7 @@ function ChamadoDetail() {
           </div>
           <h1 className="mt-2 text-2xl font-bold">{chamado.topicos_suporte?.titulo}</h1>
           <p className="text-sm text-muted-foreground">
-            {chamado.departamentos?.nome} • Aberto por {chamado.solicitante?.nome} • {chamado.empresas?.nome}
+            {chamado.departamentos?.nome} • Aberto por {displayName(chamado.solicitante)} • {chamado.empresas?.nome}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {format(new Date(chamado.data_criacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -206,7 +207,7 @@ function ChamadoDetail() {
                   return (
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                        <div className="text-[11px] opacity-70 mb-1">{m.perfis_usuarios?.nome} • {format(new Date(m.data_envio), "dd/MM HH:mm")}</div>
+                        <div className="text-[11px] opacity-70 mb-1">{displayName(m.perfis_usuarios)} • {format(new Date(m.data_envio), "dd/MM HH:mm")}</div>
                         <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: m.mensagem }} />
                       </div>
                     </div>
@@ -248,7 +249,7 @@ function ChamadoDetail() {
           <Card>
             <CardHeader><CardTitle className="text-base">Detalhes</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Info label="Atendente" value={chamado.atendente?.nome ?? "—"} />
+              <Info label="Atendente" value={chamado.atendente ? displayName(chamado.atendente) : "—"} />
               <Info label="Empresa" value={chamado.empresas?.nome ?? "—"} />
               <Info label="Departamento" value={chamado.departamentos?.nome ?? "—"} />
               <Info label="Atualizado" value={format(new Date(chamado.data_atualizacao), "dd/MM/yyyy HH:mm")} />
