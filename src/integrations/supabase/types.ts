@@ -181,6 +181,32 @@ export type Database = {
         }
         Relationships: []
       }
+      gestor_departamentos: {
+        Row: {
+          created_at: string
+          departamento_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          departamento_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          departamento_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gestor_departamentos_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensagens_chamado: {
         Row: {
           chamado_id: string
@@ -222,27 +248,45 @@ export type Database = {
       }
       perfis_usuarios: {
         Row: {
+          bloqueado: boolean
+          bloqueado_em: string | null
+          bloqueado_por: string | null
           created_at: string
           email: string
           empresa_id: string | null
           id: string
           nome: string
+          nome_historico: string | null
+          removido: boolean
+          removido_em: string | null
           updated_at: string
         }
         Insert: {
+          bloqueado?: boolean
+          bloqueado_em?: string | null
+          bloqueado_por?: string | null
           created_at?: string
           email: string
           empresa_id?: string | null
           id: string
           nome: string
+          nome_historico?: string | null
+          removido?: boolean
+          removido_em?: string | null
           updated_at?: string
         }
         Update: {
+          bloqueado?: boolean
+          bloqueado_em?: string | null
+          bloqueado_por?: string | null
           created_at?: string
           email?: string
           empresa_id?: string | null
           id?: string
           nome?: string
+          nome_historico?: string | null
+          removido?: boolean
+          removido_em?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -388,13 +432,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active: { Args: { _user_id: string }; Returns: boolean }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_dept_gestor: {
         Args: { _dept_id: string; _user_id: string }
         Returns: boolean
       }
+      is_gestor_of_dept: {
+        Args: { _dept_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_gestor_of_user: {
+        Args: { _gestor_id: string; _target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "solicitante" | "atendente" | "gestor"
+      app_role: "solicitante" | "atendente" | "gestor" | "admin"
       chamado_status:
         | "aguardando_aprovacao"
         | "atribuido"
@@ -532,7 +586,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["solicitante", "atendente", "gestor"],
+      app_role: ["solicitante", "atendente", "gestor", "admin"],
       chamado_status: [
         "aguardando_aprovacao",
         "atribuido",

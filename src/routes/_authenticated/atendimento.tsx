@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { Headphones } from "lucide-react";
 import { format } from "date-fns";
+import { displayName } from "@/lib/display-name";
 
 export const Route = createFileRoute("/_authenticated/atendimento")({
   component: Atendimento,
@@ -19,7 +20,7 @@ function Atendimento() {
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase.from("chamados")
-        .select("id, protocolo, status, data_criacao, departamentos(nome), topicos_suporte(titulo), solicitante:perfis_usuarios!chamados_solicitante_id_fkey(nome)")
+        .select("id, protocolo, status, data_criacao, departamentos(nome), topicos_suporte(titulo), solicitante:perfis_usuarios!chamados_solicitante_id_fkey(nome, nome_historico, removido)")
         .eq("atendente_id", user!.id)
         .order("data_atualizacao", { ascending: false });
       if (error) throw error;
@@ -49,7 +50,7 @@ function Atendimento() {
                       <StatusBadge status={c.status} />
                     </div>
                     <h3 className="mt-1 font-medium truncate">{c.topicos_suporte?.titulo}</h3>
-                    <p className="text-sm text-muted-foreground">{c.solicitante?.nome} • {c.departamentos?.nome}</p>
+                    <p className="text-sm text-muted-foreground">{displayName(c.solicitante)} • {c.departamentos?.nome}</p>
                   </div>
                   <span className="text-xs text-muted-foreground">{format(new Date(c.data_criacao), "dd/MM HH:mm")}</span>
                 </div>

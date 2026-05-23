@@ -1,92 +1,102 @@
-# Sistema de Chamados Internos — Grupo THV
+## Objetivo
 
-Aplicação completa em React + TanStack Start, Tailwind, shadcn/ui, Lucide. Backend nativo via **Lovable Cloud** (Supabase gerenciado) para banco, auth e realtime.
+Adicionar papel **admin** (acima de gestor) e um painel de administração completo para gerenciar usuários, papéis, departamentos vinculados a gestores, bloqueio e remoção lógica preservando histórico de chamados.
 
-## 1. Backend (Lovable Cloud)
+## 1. Banco de dados (migration)
 
-Ativar Lovable Cloud e criar via migrations:
+**Enum `app_role`**: adicionar valor `'admin'`.
 
-**Enums**
-- `app_role`: `solicitante | atendente | gestor`
-- `chamado_status`: `aguardando_aprovacao | atribuido | concluido | aguardando_tratativa | aguardando_tratativa_externa | aguardando_solicitante | reprovado | sem_resolucao`
-- `tipo_campo`: `texto | multipla_escolha`
+**`perfis_usuarios`** — novas colunas:
+- `bloqueado boolean not null default false`
+- `bloqueado_em timestamptz`, `bloqueado_por uuid`
+- `removido boolean not null default false`
+- `removido_em timestamptz`
+- `nome_historico text` (snapshot do nome no momento da remoção, usado para exibir "Ex-funcionário: <nome>")
 
-**Tabelas**
-- `empresas` (seed: THV Saneamento Ltda, Soluções D'água, Soluções Locadora)
-- `perfis_usuarios` (id = auth.uid, nome, email, empresa_id, criado_at) — sem coluna role
-- `user_roles` (user_id, role) — tabela separada por segurança, com função `has_role(uuid, app_role)` SECURITY DEFINER
-- `departamentos` (id, nome, gestor_id)
-- `topicos_suporte` (id, departamento_id, titulo)
-- `perguntas_triagem` (id, topico_id, pergunta_texto, tipo_campo, opcoes text[])
-- `chamados` (id, protocolo único `THV-YYYY-XXXX` via sequence + trigger, solicitante_id, empresa_solicitante_id, departamento_id, topico_id, status, atendente_id, gestor_aprovador_id, data_criacao, data_atualizacao)
-- `respostas_triagem` (chamado_id, pergunta_texto, resposta_texto)
-- `mensagens_chamado` (chamado_id, usuario_id, mensagem html, data_envio)
-- `avaliacoes` (chamado_id único, nota 1-5, feedback_texto, data_avaliacao)
+**Nova tabela `gestor_departamentos`** (N:N — um gestor pode ter vários departamentos):
+- `user_id uuid`, `departamento_id uuid`, `created_at`
+- PK composta (`user_id`, `departamento_id`)
 
-**Trigger**: novo usuário em `auth.users` → cria `perfis_usuarios` + role `solicitante` em `user_roles` (lendo empresa do `raw_user_meta_data`).
+> A coluna atual `departamentos.gestor_id` é 1:1; passa a ser legada (mantida para compatibilidade, mas a UI e as queries de "gestores do depto" usam a nova tabela).
 
-**RLS** em todas as tabelas, usando `has_role()`:
-- Solicitante vê apenas seus chamados; atendente vê os atribuídos; gestor vê os do seu departamento.
-- Mensagens/respostas/avaliações herdam visibilidade do chamado.
-- Configurações (departamentos, tópicos, triagem) somente gestores escrevem; leitura autenticada.
+**Funções security definer**:
+- `is_admin(_uid uuid)` — wrapper sobre `has_role`.
+- `is_active(_uid uuid)` — `not bloqueado and not removido`.
+- `is_gestor_of_dept(_uid, _dept)` — consulta `gestor_departamentos`.
 
-## 2. Estrutura de Rotas (TanStack Start)
+**Políticas RLS — atualizações**:
+- `chamados`, `mensagens_chamado`, etc.: bloquear INSERT/UPDATE quando `not is_active(auth.uid())`.
+- `user_roles`: somente **admin** pode INSERT/UPDATE/DELETE papéis (gestor perde essa permissão).
+- `perfis_usuarios`: admin tem ALL; gestor pode UPDATE apenas `bloqueado` de usuários do seu departamento; remoção/role-change só admin.
+- `departamentos`, `topicos_suporte`, `perguntas_triagem`: admin ALL; gestor mantém escrita no que já tinha (config operacional).
+- `gestor_departamentos`: SELECT autenticado; INSERT/DELETE só admin.
 
+**Trigger `handle_new_user`**: mantém criação de perfil; papel padrão continua `solicitante`.
+
+**Trigger de auditoria em login/uso**: opcional — bloquear via política RLS já é suficiente; cliente também checa `bloqueado` e faz `signOut`.
+
+## 2. Remoção lógica (preserva histórico)
+
+Soft-delete em `perfis_usuarios`:
+1. `nome_historico := 'Ex-funcionário: ' || nome`
+2. `removido := true`, `removido_em := now()`
+3. Revoga todos os `user_roles` do usuário.
+4. Remove vínculos em `gestor_departamentos`.
+5. (Opcional) Server function admin chama `supabaseAdmin.auth.admin.deleteUser(id)` ou `updateUserById(id, { ban_duration: '876600h' })` para impedir login. **Decisão recomendada**: banir (não deletar) para manter FK em `auth.users` íntegra.
+
+**Exibição em chamados**: helper UI lê `nome_historico` quando `removido = true`; senão `nome`. Aplicado em lista de chamados, detalhe, chat e dashboard.
+
+## 3. Server functions (admin) — `src/lib/admin.functions.ts`
+
+Todas com `requireSupabaseAuth` + verificação `has_role(uid, 'admin')`; usam `supabaseAdmin` para criar/banir usuários:
+
+- `adminListUsers()` — perfis + roles + departamentos vinculados + flags.
+- `adminCreateUser({ email, nome, empresa_id, role, departamento_ids? })` — cria via `auth.admin.createUser`, insere perfil, role; se `role='gestor'`, insere em `gestor_departamentos`.
+- `adminUpdateUserRole({ user_id, role, departamento_ids? })`.
+- `adminSetUserDepartments({ user_id, departamento_ids })` — só faz sentido p/ gestor.
+- `adminBlockUser({ user_id, bloqueado })` — também aceito por **gestor** (server function separada `gestorBlockUser` restrita ao próprio departamento).
+- `adminRemoveUser({ user_id })` — soft delete + ban.
+
+## 4. Frontend
+
+**Rota `/admin/usuarios`** (somente admin, gate em `_authenticated` + check de role):
+- Tabela: nome, email, empresa, papel, departamentos (chips), status (ativo/bloqueado/removido), ações.
+- Modal "Novo usuário": email, nome, empresa, papel (select), multi-select de departamentos (visível se papel=gestor).
+- Ações por linha: editar papel/departamentos, bloquear/desbloquear, remover (com confirmação destacando que histórico será preservado como "Ex-funcionário").
+
+**Rota `/admin` (config existente)**: ganha aba "Usuários" linkando para `/admin/usuarios`. Acesso de config (departamentos, tópicos, perguntas) passa a exigir admin **ou** gestor; criação de gestor só admin.
+
+**Gestor — ação de bloqueio**: na tela `/atendimento` e numa nova aba "Equipe" em `/dashboard`, gestor vê usuários do(s) seu(s) departamento(s) e pode bloquear/desbloquear (não remover, não mudar papel).
+
+**Exibição de "Ex-funcionário"**: criar helper `displayName(perfil)` reutilizado em todas as listagens/detalhes de chamados.
+
+**Login**: ao autenticar, verificar `perfis_usuarios.bloqueado/removido`; se true, `signOut` + toast "Acesso bloqueado".
+
+## 5. Primeiro admin
+
+Documentar no toast pós-deploy:
+```sql
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'admin' FROM auth.users WHERE email = 'seu@email.com';
 ```
-/                              Home pública (apresentação 3 marcas + CTA "Abrir Chamado")
-/login                         Login/Cadastro (email+senha, seleção de empresa)
-/_authenticated/chamados       Painel do solicitante (lista + "+ Novo Chamado")
-/_authenticated/chamados/novo  Formulário dinâmico (depto → tópico → triagem → editor)
-/_authenticated/chamados/$id   Detalhe + chat + ações conforme role + botão PDF
-/_authenticated/atendimento    Painel do atendente (chamados atribuídos)
-/_authenticated/aprovacoes     Painel do gestor (fila de aprovação + atribuição)
-/_authenticated/dashboard      Dashboard analítico (somente gestor)
-/_authenticated/admin          Configurações: departamentos, tópicos, perguntas (gestor)
-```
-
-Layout `_authenticated` valida sessão; `beforeLoad` em `/dashboard` e `/admin` exige role `gestor`.
-
-## 3. Fluxos Principais
-
-**Abertura**: select depto (RPC) → select tópico filtrado → render dinâmico de perguntas → editor WYSIWYG (TipTap) → submit cria chamado status `aguardando_aprovacao` + grava respostas.
-
-**Aprovação (Gestor)**: Aprovar → modal de atribuição (eu / automática round-robin entre atendentes / escolher manualmente) → status `atribuido`. Reprovar → `reprovado`.
-
-**Atendimento**: chat em tempo real (Supabase Realtime em `mensagens_chamado`); Select de status com as 6 opções; solicitante também envia mensagens e pode marcar como `concluido`.
-
-**Encerramento**: ao virar `concluido`, modal de avaliação (estrelas 1-5 + feedback) para o solicitante. Bloqueia múltiplas avaliações via unique constraint.
-
-**PDF**: botão "Baixar Histórico em PDF" usando `jspdf` + `html2canvas` — cabeçalho com protocolo/empresa/solicitante, respostas de triagem, transcrição cronológica preservando HTML do editor.
-
-## 4. Dashboard do Gestor
-
-Cards e gráficos (Recharts):
-- Total de chamados por status
-- Tempo médio de resolução (data_atualizacao − data_criacao para `concluido`)
-- Chamados por empresa (barras)
-- Média de avaliações geral e ranking por atendente
-
-## 5. UI/UX
-
-- Design moderno com identidade do Grupo THV — paleta corporativa (azul água/verde sustentabilidade), tokens semânticos em `src/styles.css` (oklch).
-- Tipografia: Space Grotesk (headings) + Inter (body).
-- Skeletons em todas as queries; toasts (sonner) em todas as mutações; estados vazios ilustrados.
-- Layout responsivo (mobile-first) com sidebar colapsável no desktop.
+(Mesmo padrão usado para gestor, agora apontando para admin.)
 
 ## Detalhes técnicos
 
-- **Stack**: React 19, TanStack Start/Router/Query, Tailwind v4, shadcn/ui, Lucide, Sonner, TipTap (editor), Recharts, jsPDF + html2canvas, date-fns.
-- **Dados**: `createServerFn` com `requireSupabaseAuth` para leituras/escritas sensíveis (atribuição, mudança de status, listagens cross-user); leituras do próprio usuário direto do client com RLS.
-- **Realtime**: subscription no canal `mensagens_chamado:chamado_id=eq.X` na tela de detalhe.
-- **Protocolo**: sequence `chamados_seq` + trigger `BEFORE INSERT` formatando `THV-{ano}-{lpad seq 4}`.
-- **Seed inicial**: 3 empresas + 1 departamento exemplo + tópicos para o primeiro gestor configurar.
-- **Promoção de roles**: primeira conta cadastrada como gestor manualmente via SQL (documentado); demais gerenciados em `/admin`.
+```text
+auth.users ──1:1── perfis_usuarios ──N:1── empresas
+                       │
+                       ├── user_roles (N — solicitante|atendente|gestor|admin)
+                       └── gestor_departamentos (N:N) ── departamentos
+chamados.solicitante_id / atendente_id → perfis_usuarios (nunca CASCADE)
+```
 
-## Perguntas antes de implementar
+- Nenhum FK com CASCADE em `chamados`/`mensagens` para `perfis_usuarios` — soft delete preserva tudo.
+- RLS de leitura de chamados continua igual; nomes vêm de `perfis_usuarios` mesmo após remoção (linha permanece, só com flags).
+- Toda mutação privilegiada passa por server fn — UI nunca chama `auth.admin.*` direto.
 
-1. **Editor WYSIWYG**: TipTap (leve, headless, integra bem com shadcn) está ok? Senão prefere React-Quill?
-2. **Primeiro gestor**: posso provisionar via SQL após o seu primeiro cadastro, ou prefere uma tela inicial de "criar admin"?
-3. **Atribuição automática**: round-robin simples entre atendentes do departamento, ou pelo menor número de chamados abertos?
-4. **Logo/identidade visual**: tem logos das 3 marcas para usar, ou gero placeholders estilizados?
+## Perguntas pendentes
 
-Posso seguir com defaults sensatos (TipTap, SQL inicial, round-robin por menor carga, placeholders) se preferir só aprovar o plano.
+1. Ao remover usuário, prefere **banir no Auth** (recomendado, FK preservada) ou **deletar do Auth** (mais "limpo", exige nullable nos FKs)?
+2. Gestor pode bloquear usuários **somente do seu departamento** ou qualquer solicitante? (Plano assume: só do seu depto.)
+3. Admin também aparece como opção de "atendente"/responsável em chamados, ou é puramente administrativo? (Plano assume: puramente administrativo.)

@@ -9,7 +9,7 @@ export interface AuthState {
   session: Session | null;
   user: User | null;
   roles: AppRole[];
-  perfil: { id: string; nome: string; email: string; empresa_id: string | null } | null;
+  perfil: { id: string; nome: string; email: string; empresa_id: string | null; bloqueado?: boolean; removido?: boolean } | null;
   loading: boolean;
 }
 
@@ -29,12 +29,24 @@ export function useAuth(): AuthState & {
   const loadExtras = async (userId: string) => {
     const [rolesRes, perfilRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("perfis_usuarios").select("id, nome, email, empresa_id").eq("id", userId).maybeSingle(),
+      supabase.from("perfis_usuarios").select("id, nome, email, empresa_id, bloqueado, removido").eq("id", userId).maybeSingle(),
     ]);
     return {
       roles: (rolesRes.data ?? []).map((r) => r.role as AppRole),
       perfil: perfilRes.data ?? null,
     };
+  };
+
+  const enforceActive = async (perfil: AuthState["perfil"]) => {
+    if (perfil && (perfil.bloqueado || perfil.removido)) {
+      await supabase.auth.signOut();
+      if (typeof window !== "undefined") {
+        const { toast } = await import("sonner");
+        toast.error(perfil.removido ? "Seu acesso foi removido" : "Seu acesso está bloqueado");
+      }
+      return true;
+    }
+    return false;
   };
 
   useEffect(() => {
@@ -43,6 +55,10 @@ export function useAuth(): AuthState & {
       if (session?.user) {
         setTimeout(async () => {
           const extras = await loadExtras(session.user.id);
+          if (await enforceActive(extras.perfil)) {
+            setState({ session: null, user: null, roles: [], perfil: null, loading: false });
+            return;
+          }
           setState({ session, user: session.user, ...extras, loading: false });
         }, 0);
       } else {
@@ -53,6 +69,10 @@ export function useAuth(): AuthState & {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const extras = await loadExtras(session.user.id);
+        if (await enforceActive(extras.perfil)) {
+          setState({ session: null, user: null, roles: [], perfil: null, loading: false });
+          return;
+        }
         setState({ session, user: session.user, ...extras, loading: false });
       } else {
         setState({ session: null, user: null, roles: [], perfil: null, loading: false });
