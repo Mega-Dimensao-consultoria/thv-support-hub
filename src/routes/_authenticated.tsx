@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
-import { Loader2, Inbox, PlusCircle, Headphones, ShieldCheck, BarChart3, Settings, LogOut } from "lucide-react";
+import { Loader2, Inbox, PlusCircle, Headphones, ShieldCheck, BarChart3, Settings, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -26,15 +26,17 @@ function AuthenticatedLayout() {
   }
 
   const isGestor = roles.includes("gestor");
+  const isAdmin = roles.includes("admin");
   const isAtendente = roles.includes("atendente") || isGestor;
 
   const nav = [
     { to: "/chamados", label: "Meus chamados", icon: Inbox, show: true },
     { to: "/chamados/novo", label: "Novo chamado", icon: PlusCircle, show: true },
     { to: "/atendimento", label: "Atendimento", icon: Headphones, show: isAtendente },
-    { to: "/aprovacoes", label: "Aprovações", icon: ShieldCheck, show: isGestor },
-    { to: "/dashboard", label: "Dashboard", icon: BarChart3, show: isGestor },
-    { to: "/admin", label: "Configurações", icon: Settings, show: isGestor },
+    { to: "/aprovacoes", label: "Aprovações", icon: ShieldCheck, show: isGestor || isAdmin },
+    { to: "/dashboard", label: "Dashboard", icon: BarChart3, show: isGestor || isAdmin },
+    { to: "/admin/usuarios", label: "Usuários", icon: Users, show: isAdmin },
+    { to: "/admin", label: "Configurações", icon: Settings, show: isGestor || isAdmin },
   ];
 
   return (
