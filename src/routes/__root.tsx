@@ -9,6 +9,10 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 function NotFoundComponent() {
   return (
@@ -72,14 +76,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Grupo THV — Central de Chamados" },
+      { name: "description", content: "Sistema de chamados internos do Grupo THV. Abra, acompanhe e gerencie atendimentos das empresas THV Saneamento, Soluções D'água e Soluções Locadora." },
+      { name: "author", content: "Grupo THV" },
+      { property: "og:title", content: "Grupo THV — Central de Chamados" },
+      { property: "og:description", content: "Central interna de chamados do Grupo THV." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -113,7 +116,20 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthSync />
       <Outlet />
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
+}
+
+function AuthSync() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      queryClient.invalidateQueries();
+    });
+    return () => subscription.unsubscribe();
+  }, [queryClient]);
+  return null;
 }
