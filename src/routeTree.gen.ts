@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedAtendimentoRouteImport } from './routes/_authenticated/atendimento'
 import { Route as AuthenticatedChamadosIndexRouteImport } from './routes/_authenticated/chamados.index'
 import { Route as AuthenticatedChamadosNovoRouteImport } from './routes/_authenticated/chamados.novo'
 import { Route as AuthenticatedChamadosIdRouteImport } from './routes/_authenticated/chamados.$id'
@@ -30,6 +31,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAtendimentoRoute =
+  AuthenticatedAtendimentoRouteImport.update({
+    id: '/atendimento',
+    path: '/atendimento',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedChamadosIndexRoute =
   AuthenticatedChamadosIndexRouteImport.update({
     id: '/chamados/',
@@ -51,6 +58,7 @@ const AuthenticatedChamadosIdRoute = AuthenticatedChamadosIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/chamados/': typeof AuthenticatedChamadosIndexRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/chamados': typeof AuthenticatedChamadosIndexRoute
@@ -67,20 +76,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/atendimento': typeof AuthenticatedAtendimentoRoute
   '/_authenticated/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/_authenticated/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/_authenticated/chamados/': typeof AuthenticatedChamadosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/chamados/$id' | '/chamados/novo' | '/chamados/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/atendimento'
+    | '/chamados/$id'
+    | '/chamados/novo'
+    | '/chamados/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/chamados/$id' | '/chamados/novo' | '/chamados'
+  to:
+    | '/'
+    | '/login'
+    | '/atendimento'
+    | '/chamados/$id'
+    | '/chamados/novo'
+    | '/chamados'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/atendimento'
     | '/_authenticated/chamados/$id'
     | '/_authenticated/chamados/novo'
     | '/_authenticated/chamados/'
@@ -115,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/atendimento': {
+      id: '/_authenticated/atendimento'
+      path: '/atendimento'
+      fullPath: '/atendimento'
+      preLoaderRoute: typeof AuthenticatedAtendimentoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/chamados/': {
       id: '/_authenticated/chamados/'
       path: '/chamados'
@@ -140,12 +170,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAtendimentoRoute: typeof AuthenticatedAtendimentoRoute
   AuthenticatedChamadosIdRoute: typeof AuthenticatedChamadosIdRoute
   AuthenticatedChamadosNovoRoute: typeof AuthenticatedChamadosNovoRoute
   AuthenticatedChamadosIndexRoute: typeof AuthenticatedChamadosIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAtendimentoRoute: AuthenticatedAtendimentoRoute,
   AuthenticatedChamadosIdRoute: AuthenticatedChamadosIdRoute,
   AuthenticatedChamadosNovoRoute: AuthenticatedChamadosNovoRoute,
   AuthenticatedChamadosIndexRoute: AuthenticatedChamadosIndexRoute,
@@ -163,3 +195,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
