@@ -295,3 +295,64 @@ function EditRoleDialog({ user, departamentos, onSave }: {
     </Dialog>
   );
 }
+
+function EditUserDataDialog({ user, empresas, onSave }: {
+  user: { id: string; nome: string | null; email: string; empresa_id: string | null };
+  empresas: { id: string; nome: string }[];
+  onSave: (p: { nome: string; email: string; empresa_id: string | null; password?: string }) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState(user.nome ?? "");
+  const [email, setEmail] = useState(user.email);
+  const [empresaId, setEmpresaId] = useState<string>(user.empresa_id ?? "");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome(user.nome ?? "");
+      setEmail(user.email);
+      setEmpresaId(user.empresa_id ?? "");
+      setPassword("");
+    }
+  }, [open, user]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><UserCog className="h-4 w-4 mr-1" />Dados</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar dados do usuário</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} /></div>
+          <div><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <div>
+            <Label>Empresa</Label>
+            <Select value={empresaId} onValueChange={setEmpresaId}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>{empresas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Nova senha (opcional)</Label>
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="deixe em branco para manter" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button disabled={saving || !nome || !email} onClick={async () => {
+            setSaving(true);
+            const ok = await onSave({
+              nome, email,
+              empresa_id: empresaId || null,
+              password: password.length >= 8 ? password : undefined,
+            });
+            setSaving(false);
+            if (ok) setOpen(false);
+          }}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
