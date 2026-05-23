@@ -178,3 +178,32 @@ export const adminRemoveUser = createServerFn({ method: "POST" })
     await supabaseAdmin.auth.admin.updateUserById(data.user_id, { ban_duration: "876000h" });
     return { ok: true };
   });
+
+const UpdateUserSchema = z.object({
+  user_id: z.string().uuid(),
+  nome: z.string().min(1).max(120),
+  email: z.string().email().max(255),
+  empresa_id: z.string().uuid().nullable().optional(),
+  password: z.string().min(8).max(72).optional().or(z.literal("")),
+});
+
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => UpdateUserSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const authUpdate: { email?: string; password?: string; user_metadata?: Record<string, unknown> } = {
+      email: data.email,
+      user_metadata: { nome: data.nome, empresa_id: data.empresa_id ?? null },
+    };
+    if (data.password && data.password.length >= 8) authUpdate.password = data.password;
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, authUpdate);
+    if (authErr) throw new Error(authErr.message);
+    const { error: profErr } = await supabaseAdmin.from("perfis_usuarios").update({
+      nome: data.nome,
+      email: data.email,
+      empresa_id: data.empresa_id ?? null,
+    }).eq("id", data.user_id);
+    if (profErr) throw new Error(profErr.message);
+    return { ok: true };
+  });
