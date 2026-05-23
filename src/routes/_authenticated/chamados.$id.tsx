@@ -18,6 +18,7 @@ import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { downloadChamadoPdf } from "@/lib/pdf";
+import DOMPurify from "isomorphic-dompurify";
 
 export const Route = createFileRoute("/_authenticated/chamados/$id")({
   component: ChamadoDetail,
@@ -208,7 +209,7 @@ function ChamadoDetail() {
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                         <div className="text-[11px] opacity-70 mb-1">{displayName(m.perfis_usuarios)} • {format(new Date(m.data_envio), "dd/MM HH:mm")}</div>
-                        <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: m.mensagem }} />
+                        <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.mensagem) }} />
                       </div>
                     </div>
                   );
