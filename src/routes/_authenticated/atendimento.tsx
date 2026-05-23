@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { Headphones } from "lucide-react";
 import { format } from "date-fns";
+import { displayName } from "@/lib/display-name";
 
 export const Route = createFileRoute("/_authenticated/atendimento")({
   component: Atendimento,
