@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
+import { displayName } from "@/lib/display-name";
 
 export const Route = createFileRoute("/_authenticated/aprovacoes")({
   component: Aprovacoes,

@@ -38,8 +38,8 @@ function ChamadoDetail() {
       const { data, error } = await supabase.from("chamados").select(`
         id, protocolo, status, data_criacao, data_atualizacao, mensagem_inicial,
         solicitante_id, atendente_id, departamento_id,
-        solicitante:perfis_usuarios!chamados_solicitante_id_fkey(id, nome, email),
-        atendente:perfis_usuarios!chamados_atendente_id_fkey(id, nome, email),
+        solicitante:perfis_usuarios!chamados_solicitante_id_fkey(id, nome, email, nome_historico, removido),
+        atendente:perfis_usuarios!chamados_atendente_id_fkey(id, nome, email, nome_historico, removido),
         empresas(nome), departamentos(nome, gestor_id), topicos_suporte(titulo)
       `).eq("id", id).single();
       if (error) throw error;
@@ -59,7 +59,7 @@ function ChamadoDetail() {
     queryKey: ["mensagens", id],
     queryFn: async () => {
       const { data } = await supabase.from("mensagens_chamado")
-        .select("id, mensagem, data_envio, usuario_id, perfis_usuarios(nome)")
+        .select("id, mensagem, data_envio, usuario_id, perfis_usuarios(nome, nome_historico, removido)")
         .eq("chamado_id", id).order("data_envio");
       return data ?? [];
     },
