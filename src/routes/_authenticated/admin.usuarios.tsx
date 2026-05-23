@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, UserPlus, Lock, Unlock, Trash2, Pencil } from "lucide-react";
+import { Loader2, UserPlus, Lock, Unlock, Trash2, Pencil, UserCog } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { adminListUsers, adminCreateUser, adminUpdateUserRole, adminBlockUser, adminRemoveUser } from "@/lib/admin.functions";
+import { adminListUsers, adminCreateUser, adminUpdateUserRole, adminBlockUser, adminRemoveUser, adminUpdateUser } from "@/lib/admin.functions";
 
 type Role = "solicitante" | "atendente" | "gestor" | "admin";
 
@@ -31,6 +31,7 @@ function AdminUsuarios() {
   const updateFn = useServerFn(adminUpdateUserRole);
   const blockFn = useServerFn(adminBlockUser);
   const removeFn = useServerFn(adminRemoveUser);
+  const updateUserFn = useServerFn(adminUpdateUser);
 
   useEffect(() => {
     if (!loading && !roles.includes("admin")) navigate({ to: "/chamados" });
@@ -103,6 +104,16 @@ function AdminUsuarios() {
                           try {
                             await updateFn({ data: { user_id: u.id, ...payload } });
                             toast.success("Papel atualizado"); invalidate(); return true;
+                          } catch (e) { toast.error((e as Error).message); return false; }
+                        }}
+                      />
+                      <EditUserDataDialog
+                        user={u}
+                        empresas={data?.empresas ?? []}
+                        onSave={async (payload) => {
+                          try {
+                            await updateUserFn({ data: { user_id: u.id, ...payload } });
+                            toast.success("Dados atualizados"); invalidate(); return true;
                           } catch (e) { toast.error((e as Error).message); return false; }
                         }}
                       />
