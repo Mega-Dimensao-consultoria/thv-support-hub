@@ -35,7 +35,7 @@ function AuthenticatedLayout() {
     { to: "/atendimento", label: "Atendimento", icon: Headphones, show: isAtendente },
     { to: "/aprovacoes", label: "Aprovações", icon: ShieldCheck, show: isGestor || isAdmin },
     { to: "/dashboard", label: "Dashboard", icon: BarChart3, show: isGestor || isAdmin },
-    { to: "/admin/usuarios", label: "Usuários", icon: Users, show: isAdmin },
+    { to: "/usuarios", label: "Usuários", icon: Users, show: isAdmin },
     { to: "/admin", label: "Configurações", icon: Settings, show: isGestor || isAdmin },
   ];
 
@@ -94,12 +94,12 @@ function AuthenticatedLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t bg-card">
-        <div className="flex justify-around">
-          {nav.filter((n) => n.show).slice(0, 5).map((n) => {
+        <div className="flex overflow-x-auto">
+          {nav.filter((n) => n.show).map((n) => {
             const active = pathname === n.to || (n.to !== "/chamados" && pathname.startsWith(n.to));
             return (
               <Link key={n.to} to={n.to}
-                className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}>
+                className={`flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`}>
                 <n.icon className="h-5 w-5" />
                 <span className="truncate max-w-[60px]">{n.label.split(" ")[0]}</span>
               </Link>
