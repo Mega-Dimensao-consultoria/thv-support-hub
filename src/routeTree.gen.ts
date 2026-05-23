@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAtendimentoRouteImport } from './routes/_authenticated/atendimento'
+import { Route as AuthenticatedAprovacoesRouteImport } from './routes/_authenticated/aprovacoes'
 import { Route as AuthenticatedChamadosIndexRouteImport } from './routes/_authenticated/chamados.index'
 import { Route as AuthenticatedChamadosNovoRouteImport } from './routes/_authenticated/chamados.novo'
 import { Route as AuthenticatedChamadosIdRouteImport } from './routes/_authenticated/chamados.$id'
@@ -37,6 +38,11 @@ const AuthenticatedAtendimentoRoute =
     path: '/atendimento',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAprovacoesRoute = AuthenticatedAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedChamadosIndexRoute =
   AuthenticatedChamadosIndexRouteImport.update({
     id: '/chamados/',
@@ -58,6 +64,7 @@ const AuthenticatedChamadosIdRoute = AuthenticatedChamadosIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/aprovacoes': typeof AuthenticatedAprovacoesRoute
   '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/aprovacoes': typeof AuthenticatedAprovacoesRoute
   '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/aprovacoes': typeof AuthenticatedAprovacoesRoute
   '/_authenticated/atendimento': typeof AuthenticatedAtendimentoRoute
   '/_authenticated/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/_authenticated/chamados/novo': typeof AuthenticatedChamadosNovoRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/aprovacoes'
     | '/atendimento'
     | '/chamados/$id'
     | '/chamados/novo'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/aprovacoes'
     | '/atendimento'
     | '/chamados/$id'
     | '/chamados/novo'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/aprovacoes'
     | '/_authenticated/atendimento'
     | '/_authenticated/chamados/$id'
     | '/_authenticated/chamados/novo'
@@ -145,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtendimentoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/aprovacoes': {
+      id: '/_authenticated/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/aprovacoes'
+      preLoaderRoute: typeof AuthenticatedAprovacoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/chamados/': {
       id: '/_authenticated/chamados/'
       path: '/chamados'
@@ -170,6 +189,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAprovacoesRoute: typeof AuthenticatedAprovacoesRoute
   AuthenticatedAtendimentoRoute: typeof AuthenticatedAtendimentoRoute
   AuthenticatedChamadosIdRoute: typeof AuthenticatedChamadosIdRoute
   AuthenticatedChamadosNovoRoute: typeof AuthenticatedChamadosNovoRoute
@@ -177,6 +197,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAprovacoesRoute: AuthenticatedAprovacoesRoute,
   AuthenticatedAtendimentoRoute: AuthenticatedAtendimentoRoute,
   AuthenticatedChamadosIdRoute: AuthenticatedChamadosIdRoute,
   AuthenticatedChamadosNovoRoute: AuthenticatedChamadosNovoRoute,
