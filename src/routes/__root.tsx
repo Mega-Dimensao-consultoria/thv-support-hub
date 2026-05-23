@@ -80,9 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Sistema de chamados internos do Grupo THV. Abra, acompanhe e gerencie atendimentos das empresas THV Saneamento, Soluções D'água e Soluções Locadora." },
       { name: "author", content: "Grupo THV" },
       { property: "og:title", content: "Grupo THV — Central de Chamados" },
-      { property: "og:description", content: "Central interna de chamados do Grupo THV." },
+      { property: "og:description", content: "Sistema de chamados internos do Grupo THV. Abra, acompanhe e gerencie atendimentos das empresas THV Saneamento, Soluções D'água e Soluções Locadora." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Grupo THV — Central de Chamados" },
+      { name: "twitter:description", content: "Sistema de chamados internos do Grupo THV. Abra, acompanhe e gerencie atendimentos das empresas THV Saneamento, Soluções D'água e Soluções Locadora." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/288ab45d-e6ad-4cf3-bfa7-03719aae9a8b/id-preview-e48d2e39--b8d90404-58bd-4c6c-b058-9abc91e01a23.lovable.app-1779544820267.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/288ab45d-e6ad-4cf3-bfa7-03719aae9a8b/id-preview-e48d2e39--b8d90404-58bd-4c6c-b058-9abc91e01a23.lovable.app-1779544820267.png" },
     ],
     links: [
       {
