@@ -40,9 +40,15 @@ export const adminListUsers = createServerFn({ method: "GET" })
 
     return {
       users: (usersRes.data ?? []).map((u) => ({
-        ...u,
-        roles: u.roles || [],
-        departamento_ids: u.departamento_ids || [],
+        id: u.id as string,
+        nome: u.nome as string | null,
+        email: u.email as string,
+        empresa_id: u.empresa_id as string | null,
+        empresa_nome: u.empresa_nome as string | null,
+        bloqueado: u.bloqueado as boolean,
+        removido: u.removido as boolean,
+        roles: (u.roles || []) as string[],
+        departamento_ids: (u.departamento_ids || []) as string[],
       })),
       departamentos: deptos.data ?? [],
       empresas: empresas.data ?? [],
