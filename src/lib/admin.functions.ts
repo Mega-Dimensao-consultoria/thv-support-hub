@@ -29,33 +29,20 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminOrGestor(context.userId);
-    const [perfis, roles, gd, deptos, empresas] = await Promise.all([
-      supabaseAdmin.from("perfis_usuarios").select("id, nome, email, empresa_id, bloqueado, removido, nome_historico, removido_em, bloqueado_em").order("nome"),
-      supabaseAdmin.from("user_roles").select("user_id, role"),
-      supabaseAdmin.from("gestor_departamentos").select("user_id, departamento_id"),
+    // Usando a View otimizada para reduzir o número de requisições e processamento no cliente
+    const [usersRes, deptos, empresas] = await Promise.all([
+      supabaseAdmin.from("vw_gestao_usuarios").select("*").order("nome"),
       supabaseAdmin.from("departamentos").select("id, nome"),
       supabaseAdmin.from("empresas").select("id, nome"),
     ]);
-    if (perfis.error) throw new Error(perfis.error.message);
-    const rolesByUser = new Map<string, string[]>();
-    (roles.data ?? []).forEach((r) => {
-      const arr = rolesByUser.get(r.user_id) ?? [];
-      arr.push(r.role);
-      rolesByUser.set(r.user_id, arr);
-    });
-    const deptsByUser = new Map<string, string[]>();
-    (gd.data ?? []).forEach((r) => {
-      const arr = deptsByUser.get(r.user_id) ?? [];
-      arr.push(r.departamento_id);
-      deptsByUser.set(r.user_id, arr);
-    });
-    const empresasMap = new Map((empresas.data ?? []).map((e) => [e.id, e.nome]));
+
+    if (usersRes.error) throw new Error(usersRes.error.message);
+
     return {
-      users: (perfis.data ?? []).map((p) => ({
-        ...p,
-        empresa_nome: p.empresa_id ? empresasMap.get(p.empresa_id) ?? null : null,
-        roles: rolesByUser.get(p.id) ?? [],
-        departamento_ids: deptsByUser.get(p.id) ?? [],
+      users: (usersRes.data ?? []).map((u) => ({
+        ...u,
+        roles: u.roles || [],
+        departamento_ids: u.departamento_ids || [],
       })),
       departamentos: deptos.data ?? [],
       empresas: empresas.data ?? [],
