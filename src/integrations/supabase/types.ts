@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      auditoria_chamados: {
+        Row: {
+          campo_alterado: string
+          chamado_id: string
+          data_alteracao: string | null
+          id: string
+          usuario_id: string | null
+          valor_antigo: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo_alterado: string
+          chamado_id: string
+          data_alteracao?: string | null
+          id?: string
+          usuario_id?: string | null
+          valor_antigo?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo_alterado?: string
+          chamado_id?: string
+          data_alteracao?: string | null
+          id?: string
+          usuario_id?: string | null
+          valor_antigo?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_chamados_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       avaliacoes: {
         Row: {
           chamado_id: string
@@ -98,6 +136,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chamados_atendente_id_fkey"
+            columns: ["atendente_id"]
+            isOneToOne: false
+            referencedRelation: "vw_gestao_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chamados_departamento_id_fkey"
             columns: ["departamento_id"]
             isOneToOne: false
@@ -119,10 +164,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chamados_gestor_aprovador_id_fkey"
+            columns: ["gestor_aprovador_id"]
+            isOneToOne: false
+            referencedRelation: "vw_gestao_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chamados_solicitante_id_fkey"
             columns: ["solicitante_id"]
             isOneToOne: false
             referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "vw_gestao_usuarios"
             referencedColumns: ["id"]
           },
           {
@@ -159,6 +218,13 @@ export type Database = {
             columns: ["gestor_id"]
             isOneToOne: false
             referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departamentos_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "vw_gestao_usuarios"
             referencedColumns: ["id"]
           },
         ]
@@ -242,6 +308,13 @@ export type Database = {
             columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "perfis_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chamado_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "vw_gestao_usuarios"
             referencedColumns: ["id"]
           },
         ]
@@ -442,7 +515,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_gestao_usuarios: {
+        Row: {
+          bloqueado: boolean | null
+          departamento_ids: string[] | null
+          email: string | null
+          empresa_id: string | null
+          empresa_nome: string | null
+          id: string | null
+          nome: string | null
+          nome_historico: string | null
+          removido: boolean | null
+          roles: Database["public"]["Enums"]["app_role"][] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_empresa: { Args: { _user_id: string }; Returns: string }
