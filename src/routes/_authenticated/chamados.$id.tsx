@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { STATUS_ATENDENTE, STATUS_LABEL, type ChamadoStatus } from "@/lib/status";
 import { RichEditor } from "@/components/rich-editor";
 import { toast } from "sonner";
-import { Download, CheckCircle2, X, Send, Loader2, Star } from "lucide-react";
+import { Download, CheckCircle2, X, Send, Loader2, Star, Paperclip, FileText, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { displayName } from "@/lib/display-name";
 import { ptBR } from "date-fns/locale";
@@ -32,7 +32,9 @@ function ChamadoDetail() {
   const [sending, setSending] = useState(false);
   const [showAvaliacao, setShowAvaliacao] = useState(false);
   const [showAtribuir, setShowAtribuir] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: chamado, isLoading } = useQuery({
     queryKey: ["chamado", id],
@@ -61,7 +63,7 @@ function ChamadoDetail() {
     queryKey: ["mensagens", id],
     queryFn: async () => {
       const { data } = await supabase.from("mensagens_chamado")
-        .select("id, mensagem, data_envio, usuario_id, perfis_usuarios(nome, nome_historico, removido)")
+        .select("id, mensagem, data_envio, usuario_id, anexo_url, perfis_usuarios(nome, nome_historico, removido)")
         .eq("chamado_id", id).order("data_envio");
       return data ?? [];
     },
@@ -106,16 +108,51 @@ function ChamadoDetail() {
   const canApprove = isGestorDept && chamado.status === "aguardando_aprovacao";
   const canChangeStatus = (isAtendente || isGestorDept) && chamado.status !== "aguardando_aprovacao" && chamado.status !== "reprovado";
 
-  const sendMessage = async () => {
-    if (!novaMsg || novaMsg === "<p></p>" || !user) return;
+  const sendMessage = async (anexoUrl?: string) => {
+    if ((!novaMsg || novaMsg === "<p></p>") && !anexoUrl) return;
+    if (!user) return;
     setSending(true);
     const { error } = await supabase.from("mensagens_chamado").insert({
-      chamado_id: id, usuario_id: user.id, mensagem: novaMsg,
+      chamado_id: id, usuario_id: user.id, mensagem: novaMsg || "", anexo_url: anexoUrl,
     });
+    setSending(true);
+    if (error) {
+      setSending(false);
+      return toast.error(error.message);
+    }
     setSending(false);
-    if (error) return toast.error(error.message);
     setNovaMsg("");
     qc.invalidateQueries({ queryKey: ["mensagens", id] });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("Arquivo muito grande (máx 5MB)");
+    }
+
+    setUploading(true);
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${id}/${crypto.randomUUID()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("chamados-anexos")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      setUploading(false);
+      return toast.error("Erro no upload: " + uploadError.message);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("chamados-anexos")
+      .getPublicUrl(filePath);
+
+    await sendMessage(publicUrl);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const changeStatus = async (status: ChamadoStatus) => {
@@ -209,7 +246,20 @@ function ChamadoDetail() {
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                         <div className="text-[11px] opacity-70 mb-1">{displayName(m.perfis_usuarios)} • {format(new Date(m.data_envio), "dd/MM HH:mm")}</div>
-                        <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.mensagem) }} />
+                        {m.mensagem && <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.mensagem) }} />}
+                        {m.anexo_url && (
+                          <div className={`mt-2 p-2 rounded-lg border flex items-center gap-2 ${mine ? "bg-white/10 border-white/20" : "bg-background/50 border-border"}`}>
+                            {m.anexo_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                              <a href={m.anexo_url} target="_blank" rel="noopener noreferrer">
+                                <img src={m.anexo_url} alt="Anexo" className="max-w-[200px] rounded border" />
+                              </a>
+                            ) : (
+                              <a href={m.anexo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-medium underline">
+                                <FileText className="h-4 w-4" /> Ver arquivo anexo
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -220,8 +270,15 @@ function ChamadoDetail() {
               {canChat && (
                 <div className="mt-4 space-y-2">
                   <RichEditor value={novaMsg} onChange={setNovaMsg} placeholder="Escreva uma mensagem..." minHeight={80} />
-                  <div className="flex justify-end">
-                    <Button onClick={sendMessage} disabled={sending || !novaMsg || novaMsg === "<p></p>"}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                      <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4 mr-1" />}
+                        Anexar
+                      </Button>
+                    </div>
+                    <Button onClick={() => sendMessage()} disabled={sending || uploading || (!novaMsg || novaMsg === "<p></p>")}>
                       {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                       Enviar
                     </Button>
