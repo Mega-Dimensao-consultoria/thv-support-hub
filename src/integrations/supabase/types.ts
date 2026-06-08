@@ -275,6 +275,7 @@ export type Database = {
       }
       mensagens_chamado: {
         Row: {
+          anexo_url: string | null
           chamado_id: string
           data_envio: string
           id: string
@@ -282,6 +283,7 @@ export type Database = {
           usuario_id: string
         }
         Insert: {
+          anexo_url?: string | null
           chamado_id: string
           data_envio?: string
           id?: string
@@ -289,6 +291,7 @@ export type Database = {
           usuario_id: string
         }
         Update: {
+          anexo_url?: string | null
           chamado_id?: string
           data_envio?: string
           id?: string
@@ -540,6 +543,8 @@ export type Database = {
       }
     }
     Functions: {
+      fechar_chamados_inativos: { Args: never; Returns: undefined }
+      get_dashboard_stats: { Args: never; Returns: Json }
       get_user_empresa: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
