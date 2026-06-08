@@ -47,6 +47,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
         empresa_nome: u.empresa_nome as string | null,
         bloqueado: u.bloqueado as boolean,
         removido: u.removido as boolean,
+        nome_historico: u.nome_historico as string | null,
         roles: (u.roles || []) as string[],
         departamento_ids: (u.departamento_ids || []) as string[],
       })),
