@@ -524,6 +524,7 @@ export type Database = {
           empresa_nome: string | null
           id: string | null
           nome: string | null
+          nome_historico: string | null
           removido: boolean | null
           roles: Database["public"]["Enums"]["app_role"][] | null
         }
