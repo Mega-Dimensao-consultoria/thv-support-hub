@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { STATUS_ATENDENTE, STATUS_LABEL, type ChamadoStatus } from "@/lib/status";
 import { RichEditor } from "@/components/rich-editor";
 import { toast } from "sonner";
-import { Download, CheckCircle2, X, Send, Loader2, Star, Paperclip, FileText, Image as ImageIcon } from "lucide-react";
+import { Download, CheckCircle2, X, Send, Loader2, Star, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import { displayName } from "@/lib/display-name";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { downloadChamadoPdf } from "@/lib/pdf";
 import DOMPurify from "isomorphic-dompurify";
+import { AttachmentLink } from "@/components/attachment-link";
 
 export const Route = createFileRoute("/_authenticated/chamados/$id")({
   component: ChamadoDetail,
@@ -244,19 +245,7 @@ function ChamadoDetail() {
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                         <div className="text-[11px] opacity-70 mb-1">{displayName(m.perfis_usuarios)} • {format(new Date(m.data_envio), "dd/MM HH:mm")}</div>
                         {m.mensagem && <div className="prose-msg text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.mensagem) }} />}
-                        {m.anexo_url && (
-                          <div className={`mt-2 p-2 rounded-lg border flex items-center gap-2 ${mine ? "bg-white/10 border-white/20" : "bg-background/50 border-border"}`}>
-                            {m.anexo_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                              <a href={m.anexo_url} target="_blank" rel="noopener noreferrer">
-                                <img src={m.anexo_url} alt="Anexo" className="max-w-[200px] rounded border" />
-                              </a>
-                            ) : (
-                              <a href={m.anexo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-medium underline">
-                                <FileText className="h-4 w-4" /> Ver arquivo anexo
-                              </a>
-                            )}
-                          </div>
-                        )}
+                        {m.anexo_url && <AttachmentLink value={m.anexo_url} mine={mine} />}
                       </div>
                     </div>
                   );
