@@ -146,11 +146,8 @@ function ChamadoDetail() {
       return toast.error("Erro no upload: " + uploadError.message);
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("chamados-anexos")
-      .getPublicUrl(filePath);
-
-    await sendMessage(publicUrl);
+    // Bucket é privado — armazenamos apenas o path; URL assinada é gerada na leitura
+    await sendMessage(filePath);
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
