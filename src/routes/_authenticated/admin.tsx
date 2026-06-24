@@ -64,8 +64,18 @@ function Departamentos() {
 
   const add = async () => {
     if (!nome) return;
-    const { error } = await supabase.from("departamentos").insert({ nome, gestor_id: gestorId || null });
+    const { data: novoDept, error } = await supabase
+      .from("departamentos")
+      .insert({ nome })
+      .select("id")
+      .single();
     if (error) return toast.error(error.message);
+    if (gestorId && novoDept) {
+      const { error: gdErr } = await supabase
+        .from("gestor_departamentos")
+        .insert({ user_id: gestorId, departamento_id: novoDept.id });
+      if (gdErr) return toast.error(gdErr.message);
+    }
     toast.success("Departamento criado");
     setNome(""); setGestorId("");
     qc.invalidateQueries({ queryKey: ["admin-deptos"] });
