@@ -1,0 +1,310 @@
+import * as React from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { createClient } from '@supabase/supabase-js'
+import { render } from '@react-email/components'
+import { TEMPLATES } from '@/lib/email-templates/registry'
+
+const SENDER_DOMAIN = 'notificacoes.chamados.grupothv.com.br'
+const FROM_DOMAIN = 'chamados.grupothv.com.br'
+const SITE_NAME = 'THV Connect'
+const APP_URL = 'https://chamados.grupothv.com.br'
+
+type EventType =
+  | 'novo'
+  | 'atribuido'
+  | 'mensagem'
+  | 'status'
+  | 'concluido'
+
+interface Payload {
+  event: EventType
+  chamado_id: string
+  // contexto opcional (do trigger)
+  status_anterior?: string | null
+  status_novo?: string | null
+  mensagem_autor_id?: string | null
+  mensagem_preview?: string | null
+  atendente_anterior?: string | null
+  atendente_novo?: string | null
+}
+
+function previewFromHtml(html: string | null | undefined, max = 240): string {
+  if (!html) return ''
+  const text = String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  return text.length > max ? text.slice(0, max) + '…' : text
+}
+
+async function enqueueEmail(
+  supabase: ReturnType<typeof createClient>,
+  templateName: string,
+  recipientEmail: string,
+  templateData: Record<string, any>,
+  idempotencyKey: string,
+) {
+  const entry = TEMPLATES[templateName]
+  if (!entry) {
+    console.error('Template not found', { templateName })
+    return
+  }
+
+  // Suppression check
+  const { data: suppressed } = await supabase
+    .from('suppressed_emails')
+    .select('email')
+    .eq('email', recipientEmail.toLowerCase())
+    .maybeSingle()
+  if (suppressed) {
+    await supabase.from('email_send_log').insert({
+      message_id: idempotencyKey,
+      template_name: templateName,
+      recipient_email: recipientEmail,
+      status: 'suppressed',
+      error_message: 'Recipient is on suppression list',
+    })
+    return
+  }
+
+  const data = { ...templateData, appUrl: APP_URL }
+  const element = React.createElement(entry.component as any, data)
+  const html = await render(element)
+  const plainText = await render(element, { plainText: true })
+  const subject =
+    typeof entry.subject === 'function' ? entry.subject(data) : entry.subject
+
+  const from = `${SITE_NAME} <no-reply@${FROM_DOMAIN}>`
+  const replyTo = `no-reply@${FROM_DOMAIN}`
+
+  const { error } = await supabase.rpc('enqueue_email', {
+    p_queue_name: 'transactional_emails',
+    p_message_id: idempotencyKey,
+    p_template_name: templateName,
+    p_recipient_email: recipientEmail,
+    p_subject: subject,
+    p_html: html,
+    p_text: plainText,
+    p_from: from,
+    p_reply_to: replyTo,
+    p_sender_domain: SENDER_DOMAIN,
+    p_metadata: { event: data.event ?? null, chamado_id: data.chamadoId ?? null },
+  })
+  if (error) {
+    console.error('enqueue_email failed', { error, templateName })
+    await supabase.from('email_send_log').insert({
+      message_id: idempotencyKey,
+      template_name: templateName,
+      recipient_email: recipientEmail,
+      status: 'failed',
+      error_message: error.message,
+    })
+  } else {
+    await supabase.from('email_send_log').insert({
+      message_id: idempotencyKey,
+      template_name: templateName,
+      recipient_email: recipientEmail,
+      status: 'pending',
+    })
+  }
+}
+
+export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const supabaseUrl = process.env.SUPABASE_URL ?? import.meta.env.VITE_SUPABASE_URL
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        const expectedApiKey =
+          process.env.SUPABASE_PUBLISHABLE_KEY ??
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+        if (!supabaseUrl || !serviceKey || !expectedApiKey) {
+          return new Response('Server config error', { status: 500 })
+        }
+
+        // Auth: pg_cron / DB triggers passam o anon key via apikey header
+        const apiKey =
+          request.headers.get('apikey') ??
+          request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+        if (apiKey !== expectedApiKey) {
+          return new Response('Unauthorized', { status: 401 })
+        }
+
+        let body: Payload
+        try {
+          body = (await request.json()) as Payload
+        } catch {
+          return new Response('Invalid JSON', { status: 400 })
+        }
+        if (!body?.event || !body?.chamado_id) {
+          return new Response('Missing event/chamado_id', { status: 400 })
+        }
+
+        const supabase = createClient(supabaseUrl, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+
+        // Carrega chamado + relacionados
+        const { data: chamado, error: cErr } = await supabase
+          .from('chamados')
+          .select(
+            'id, protocolo, status, solicitante_id, atendente_id, departamento_id, topico_id, mensagem_inicial, empresa_solicitante_id',
+          )
+          .eq('id', body.chamado_id)
+          .maybeSingle()
+        if (cErr || !chamado) {
+          return new Response('Chamado not found', { status: 404 })
+        }
+
+        const [solicitanteRes, atendenteRes, deptRes, topicoRes, empresaRes] =
+          await Promise.all([
+            supabase
+              .from('perfis_usuarios')
+              .select('id, nome, email, bloqueado, removido')
+              .eq('id', chamado.solicitante_id as string)
+              .maybeSingle(),
+            chamado.atendente_id
+              ? supabase
+                  .from('perfis_usuarios')
+                  .select('id, nome, email, bloqueado, removido')
+                  .eq('id', chamado.atendente_id as string)
+                  .maybeSingle()
+              : Promise.resolve({ data: null, error: null } as any),
+            supabase
+              .from('departamentos')
+              .select('id, nome')
+              .eq('id', chamado.departamento_id as string)
+              .maybeSingle(),
+            supabase
+              .from('topicos_suporte')
+              .select('id, titulo')
+              .eq('id', chamado.topico_id as string)
+              .maybeSingle(),
+            chamado.empresa_solicitante_id
+              ? supabase
+                  .from('empresas')
+                  .select('id, nome')
+                  .eq('id', chamado.empresa_solicitante_id as string)
+                  .maybeSingle()
+              : Promise.resolve({ data: null, error: null } as any),
+          ])
+
+        const solicitante = solicitanteRes.data as any
+        const atendente = atendenteRes.data as any
+        const departamento = deptRes.data as any
+        const topico = topicoRes.data as any
+        const empresa = empresaRes.data as any
+
+        const isActive = (p: any) => p && !p.bloqueado && !p.removido && p.email
+        const common = {
+          protocolo: chamado.protocolo ?? '',
+          chamadoId: chamado.id,
+          departamentoNome: departamento?.nome ?? '',
+          topicoTitulo: topico?.titulo ?? '',
+        }
+
+        // Dispatch
+        if (body.event === 'novo') {
+          // gestores do departamento
+          const { data: gestores } = await supabase
+            .from('gestor_departamentos')
+            .select('user_id')
+            .eq('departamento_id', chamado.departamento_id as string)
+          const userIds = (gestores ?? []).map((g: any) => g.user_id)
+          if (userIds.length > 0) {
+            const { data: perfis } = await supabase
+              .from('perfis_usuarios')
+              .select('id, nome, email, bloqueado, removido')
+              .in('id', userIds)
+            const data = {
+              ...common,
+              solicitanteNome: solicitante?.nome ?? '',
+              empresaNome: empresa?.nome ?? '',
+              mensagemPreview: previewFromHtml(chamado.mensagem_inicial as string),
+            }
+            await Promise.all(
+              (perfis ?? []).filter(isActive).map((p: any) =>
+                enqueueEmail(
+                  supabase,
+                  'chamado-novo',
+                  p.email,
+                  { ...data, destinatarioNome: p.nome },
+                  `chamado-novo:${chamado.id}:${p.id}`,
+                ),
+              ),
+            )
+          }
+        } else if (body.event === 'atribuido') {
+          if (isActive(atendente)) {
+            await enqueueEmail(
+              supabase,
+              'chamado-atribuido',
+              atendente.email,
+              {
+                ...common,
+                atendenteNome: atendente.nome,
+                solicitanteNome: solicitante?.nome ?? '',
+              },
+              `chamado-atribuido:${chamado.id}:${atendente.id}`,
+            )
+          }
+        } else if (body.event === 'mensagem') {
+          // notifica o counterpart do autor da mensagem
+          const autorId = body.mensagem_autor_id
+          const autorEhSolicitante = autorId === chamado.solicitante_id
+          const autorNome = autorEhSolicitante
+            ? solicitante?.nome ?? 'Solicitante'
+            : atendente?.nome ?? 'Atendente'
+          const destinatarios: any[] = []
+          if (autorEhSolicitante && isActive(atendente)) destinatarios.push(atendente)
+          if (!autorEhSolicitante && isActive(solicitante)) destinatarios.push(solicitante)
+          const data = {
+            ...common,
+            autorNome,
+            mensagemPreview: previewFromHtml(body.mensagem_preview),
+          }
+          await Promise.all(
+            destinatarios.map((p) =>
+              enqueueEmail(
+                supabase,
+                'chamado-mensagem',
+                p.email,
+                { ...data, destinatarioNome: p.nome },
+                `chamado-mensagem:${chamado.id}:${p.id}:${Date.now()}`,
+              ),
+            ),
+          )
+        } else if (body.event === 'status') {
+          if (isActive(solicitante)) {
+            await enqueueEmail(
+              supabase,
+              'chamado-status',
+              solicitante.email,
+              {
+                ...common,
+                destinatarioNome: solicitante.nome,
+                statusAnterior: body.status_anterior ?? '',
+                statusNovo: body.status_novo ?? (chamado.status as string),
+              },
+              `chamado-status:${chamado.id}:${body.status_novo ?? chamado.status}`,
+            )
+          }
+        } else if (body.event === 'concluido') {
+          if (isActive(solicitante)) {
+            await enqueueEmail(
+              supabase,
+              'chamado-concluido',
+              solicitante.email,
+              {
+                ...common,
+                destinatarioNome: solicitante.nome,
+                atendenteNome: atendente?.nome ?? '',
+              },
+              `chamado-concluido:${chamado.id}`,
+            )
+          }
+        }
+
+        return Response.json({ ok: true })
+      },
+    },
+  },
+})
