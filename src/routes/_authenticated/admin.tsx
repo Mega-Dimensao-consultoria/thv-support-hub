@@ -53,13 +53,22 @@ function Departamentos() {
     queryFn: async () => {
       const { data: deps } = await supabase
         .from("departamentos")
-        .select("id, nome, gestor_departamentos(perfis_usuarios(nome))")
+        .select("id, nome, gestor_departamentos(user_id)")
         .order("nome");
+      const userIds = Array.from(
+        new Set((deps ?? []).flatMap((d) => (d.gestor_departamentos ?? []).map((g) => g.user_id))),
+      );
+      const nomeById = new Map<string, string>();
+      if (userIds.length) {
+        const { data: perfis } = await supabase
+          .from("perfis_usuarios").select("id, nome").in("id", userIds);
+        (perfis ?? []).forEach((p) => nomeById.set(p.id, p.nome));
+      }
       return (deps ?? []).map((d) => ({
         id: d.id,
         nome: d.nome,
         gestores: (d.gestor_departamentos ?? [])
-          .map((g: { perfis_usuarios: { nome: string } | null }) => g.perfis_usuarios?.nome)
+          .map((g) => nomeById.get(g.user_id))
           .filter(Boolean) as string[],
       }));
     },
