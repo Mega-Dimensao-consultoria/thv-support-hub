@@ -132,6 +132,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <ServiceWorkerRegister />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
@@ -146,5 +147,24 @@ function AuthSync() {
     });
     return () => subscription.unsubscribe();
   }, [queryClient]);
+  return null;
+}
+
+function ServiceWorkerRegister() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator)) return;
+    // Não registrar em previews do editor Lovable
+    const host = window.location.hostname;
+    if (
+      host.startsWith('id-preview--') ||
+      host.startsWith('preview--') ||
+      host.endsWith('.lovableproject.com') ||
+      host.endsWith('.lovableproject-dev.com')
+    ) {
+      return;
+    }
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  }, []);
   return null;
 }
