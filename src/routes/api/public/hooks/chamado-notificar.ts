@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createClient } from '@supabase/supabase-js'
 import { render } from '@react-email/components'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { timingSafeEqual } from 'node:crypto'
 
 const SENDER_DOMAIN = 'notificacoes.chamados.grupothv.com.br'
 const FROM_DOMAIN = 'chamados.grupothv.com.br'
@@ -124,18 +125,37 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
         const supabaseUrl =
           process.env.SUPABASE_URL ?? import.meta.env.VITE_SUPABASE_URL
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        const expectedApiKey =
-          process.env.SUPABASE_PUBLISHABLE_KEY ??
-          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-        if (!supabaseUrl || !serviceKey || !expectedApiKey) {
+        if (!supabaseUrl || !serviceKey) {
           return new Response('Server config error', { status: 500 })
         }
 
-        const apiKey =
-          request.headers.get('apikey') ??
-          request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-        if (apiKey !== expectedApiKey) {
+        const providedSecret = request.headers.get('x-webhook-secret') ?? ''
+
+        const supabase: any = createClient(supabaseUrl, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+
+        // Lê o segredo esperado do Vault (única fonte de verdade)
+        const { data: secretRow, error: secretErr } = await supabase
+          .schema('vault')
+          .from('decrypted_secrets')
+          .select('decrypted_secret')
+          .eq('name', 'chamado_webhook_secret')
+          .maybeSingle()
+
+        if (secretErr || !secretRow?.decrypted_secret) {
+          console.error('chamado-notificar: falha ao ler segredo do vault', secretErr)
+          return new Response('Server config error', { status: 500 })
+        }
+
+        const expectedBuf = Buffer.from(String(secretRow.decrypted_secret))
+        const providedBuf = Buffer.from(providedSecret)
+        const valid =
+          providedBuf.length === expectedBuf.length &&
+          timingSafeEqual(providedBuf, expectedBuf)
+
+        if (!valid) {
           return new Response('Unauthorized', { status: 401 })
         }
 
@@ -148,10 +168,6 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
         if (!body?.event || !body?.chamado_id) {
           return new Response('Missing event/chamado_id', { status: 400 })
         }
-
-        const supabase: any = createClient(supabaseUrl, serviceKey, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        })
 
         const { data: chamado, error: cErr } = await supabase
           .from('chamados')
