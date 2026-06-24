@@ -12,15 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAtendimentoRouteImport } from './routes/_authenticated/atendimento'
 import { Route as AuthenticatedAprovacoesRouteImport } from './routes/_authenticated/aprovacoes'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChamadosIndexRouteImport } from './routes/_authenticated/chamados.index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedChamadosNovoRouteImport } from './routes/_authenticated/chamados.novo'
 import { Route as AuthenticatedChamadosIdRouteImport } from './routes/_authenticated/chamados.$id'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksChamadoNotificarRouteImport } from './routes/api/public/hooks/chamado-notificar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -34,6 +39,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
@@ -68,6 +78,11 @@ const AuthenticatedChamadosIndexRoute =
     path: '/chamados/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedChamadosNovoRoute =
   AuthenticatedChamadosNovoRouteImport.update({
     id: '/chamados/novo',
@@ -79,10 +94,28 @@ const AuthenticatedChamadosIdRoute = AuthenticatedChamadosIdRouteImport.update({
   path: '/chamados/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
     path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksChamadoNotificarRoute =
+  ApiPublicHooksChamadoNotificarRouteImport.update({
+    id: '/api/public/hooks/chamado-notificar',
+    path: '/api/public/hooks/chamado-notificar',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -94,10 +127,15 @@ export interface FileRoutesByFullPath {
   '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/chamados/': typeof AuthenticatedChamadosIndexRoute
+  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,10 +145,15 @@ export interface FileRoutesByTo {
   '/atendimento': typeof AuthenticatedAtendimentoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/chamados': typeof AuthenticatedChamadosIndexRoute
+  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,10 +165,15 @@ export interface FileRoutesById {
   '/_authenticated/atendimento': typeof AuthenticatedAtendimentoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/chamados/$id': typeof AuthenticatedChamadosIdRoute
   '/_authenticated/chamados/novo': typeof AuthenticatedChamadosNovoRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/chamados/': typeof AuthenticatedChamadosIndexRoute
+  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,10 +185,15 @@ export interface FileRouteTypes {
     | '/atendimento'
     | '/dashboard'
     | '/usuarios'
+    | '/email/unsubscribe'
     | '/chamados/$id'
     | '/chamados/novo'
+    | '/lovable/email/suppression'
     | '/chamados/'
+    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,10 +203,15 @@ export interface FileRouteTypes {
     | '/atendimento'
     | '/dashboard'
     | '/usuarios'
+    | '/email/unsubscribe'
     | '/chamados/$id'
     | '/chamados/novo'
+    | '/lovable/email/suppression'
     | '/chamados'
+    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -164,17 +222,27 @@ export interface FileRouteTypes {
     | '/_authenticated/atendimento'
     | '/_authenticated/dashboard'
     | '/_authenticated/usuarios'
+    | '/email/unsubscribe'
     | '/_authenticated/chamados/$id'
     | '/_authenticated/chamados/novo'
+    | '/lovable/email/suppression'
     | '/_authenticated/chamados/'
+    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksChamadoNotificarRoute: typeof ApiPublicHooksChamadoNotificarRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/usuarios': {
@@ -242,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChamadosIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/chamados/novo': {
       id: '/_authenticated/chamados/novo'
       path: '/chamados/novo'
@@ -256,11 +338,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChamadosIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/chamado-notificar': {
+      id: '/api/public/hooks/chamado-notificar'
+      path: '/api/public/hooks/chamado-notificar'
+      fullPath: '/api/public/hooks/chamado-notificar'
+      preLoaderRoute: typeof ApiPublicHooksChamadoNotificarRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -296,7 +399,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksChamadoNotificarRoute: ApiPublicHooksChamadoNotificarRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

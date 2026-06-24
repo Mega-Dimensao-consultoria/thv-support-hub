@@ -695,6 +695,17 @@ export type Database = {
         }
         Returns: number
       }
+      notificar_chamado_evento: {
+        Args: {
+          _chamado_id: string
+          _event: string
+          _mensagem_autor_id?: string
+          _mensagem_preview?: string
+          _status_anterior?: string
+          _status_novo?: string
+        }
+        Returns: undefined
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
