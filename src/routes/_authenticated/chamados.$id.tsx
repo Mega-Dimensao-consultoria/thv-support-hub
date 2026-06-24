@@ -280,7 +280,13 @@ function ChamadoDetail() {
                   <RichEditor value={novaMsg} onChange={setNovaMsg} placeholder="Escreva uma mensagem..." minHeight={80} />
                   <div className="flex justify-between items-center">
                     <div>
-                      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                        onChange={handleFileUpload}
+                      />
                       <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4 mr-1" />}
                         Anexar
