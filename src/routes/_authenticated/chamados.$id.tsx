@@ -130,13 +130,35 @@ function ChamadoDetail() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("Arquivo muito grande (máx 5MB)");
+    if (file.size > 10 * 1024 * 1024) {
+      return toast.error("Arquivo muito grande (máx 10MB)");
+    }
+
+    const ALLOWED_MIME = new Set([
+      "application/pdf",
+      "image/png", "image/jpeg", "image/webp", "image/gif",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "text/plain", "text/csv",
+    ]);
+    const BLOCKED_EXT = new Set([
+      "exe","bat","cmd","sh","ps1","js","mjs","cjs","jsx","ts","tsx",
+      "html","htm","svg","php","jar","com","scr","vbs","msi","app","dll",
+    ]);
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (BLOCKED_EXT.has(ext)) {
+      return toast.error("Tipo de arquivo não permitido");
+    }
+    if (!ALLOWED_MIME.has(file.type)) {
+      return toast.error("Formato não suportado. Use PDF, imagem ou documento Office.");
     }
 
     setUploading(true);
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${id}/${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${id}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("chamados-anexos")
