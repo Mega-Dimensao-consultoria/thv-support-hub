@@ -31,6 +31,16 @@ function redact(email: string) {
   return `${u?.[0] ?? '*'}***@${d ?? '?'}`
 }
 
+async function sendPush(userIds: string[], payload: { title: string; body: string; url?: string; tag?: string }) {
+  if (!userIds || userIds.length === 0) return
+  try {
+    const mod = await import('@/lib/push/server.server')
+    await mod.sendPushToUsers(userIds, payload)
+  } catch (e) {
+    console.warn('sendPush failed', e)
+  }
+}
+
 async function enqueueEmail(
   supabase: any,
   templateName: string,
