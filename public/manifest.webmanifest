@@ -1,0 +1,16 @@
+{
+  "name": "Grupo THV — Central de Chamados",
+  "short_name": "THV Chamados",
+  "description": "Sistema de chamados internos do Grupo THV.",
+  "start_url": "/chamados",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
