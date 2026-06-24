@@ -186,7 +186,7 @@ function CreateUserDialog({ empresas, departamentos, onCreate }: {
         <div className="space-y-3">
           <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} /></div>
           <div><Label>E-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div><Label>Senha provisória</Label><Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="mínimo 8 caracteres" /></div>
+          <div><Label>Senha provisória</Label><Input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="mínimo 8 caracteres" /></div>
           <div>
             <Label>Empresa</Label>
             <Select value={empresaId} onValueChange={setEmpresaId}>

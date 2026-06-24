@@ -59,6 +59,24 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Authorization: only privileged staff may enqueue transactional emails.
+        // Solicitantes (default role on signup) must NOT be able to send emails.
+        const { data: roleRows, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+
+        if (roleError) {
+          console.error('Role lookup failed for email send', { error: roleError })
+          return Response.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
+        const allowed = new Set(['admin', 'atendente', 'gestor'])
+        const hasAllowedRole = (roleRows ?? []).some((r) => allowed.has(r.role))
+        if (!hasAllowedRole) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
         // Parse request body
         let templateName: string
         let recipientEmail: string
