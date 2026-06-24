@@ -50,7 +50,19 @@ function Departamentos() {
   const [gestorId, setGestorId] = useState("");
   const { data } = useQuery({
     queryKey: ["admin-deptos"],
-    queryFn: async () => (await supabase.from("departamentos").select("id, nome, gestor:perfis_usuarios(nome)").order("nome")).data ?? [],
+    queryFn: async () => {
+      const { data: deps } = await supabase
+        .from("departamentos")
+        .select("id, nome, gestor_departamentos(perfis_usuarios(nome))")
+        .order("nome");
+      return (deps ?? []).map((d) => ({
+        id: d.id,
+        nome: d.nome,
+        gestores: (d.gestor_departamentos ?? [])
+          .map((g: { perfis_usuarios: { nome: string } | null }) => g.perfis_usuarios?.nome)
+          .filter(Boolean) as string[],
+      }));
+    },
   });
   const { data: gestores } = useQuery({
     queryKey: ["admin-gestores"],
@@ -104,7 +116,7 @@ function Departamentos() {
             <div key={d.id} className="flex items-center justify-between border-b last:border-0 py-2 text-sm">
               <div>
                 <div className="font-medium">{d.nome}</div>
-                <div className="text-xs text-muted-foreground">Gestor: {d.gestor?.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">Gestor: {d.gestores.length ? d.gestores.join(", ") : "—"}</div>
               </div>
               <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>
