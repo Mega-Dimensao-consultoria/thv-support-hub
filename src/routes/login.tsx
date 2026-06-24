@@ -12,11 +12,21 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === 'string' ? (search.redirect as string) : undefined,
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const redirectTo = (() => {
+    const r = search.redirect;
+    if (!r || typeof r !== 'string') return '/chamados';
+    // só aceitamos paths relativos para evitar open-redirect
+    return r.startsWith('/') && !r.startsWith('//') ? r : '/chamados';
+  })();
   const [tab, setTab] = useState("entrar");
   const [loading, setLoading] = useState(false);
 
@@ -41,9 +51,9 @@ function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/chamados" });
+      if (data.session) navigate({ to: redirectTo });
     });
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +62,7 @@ function LoginPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Bem-vindo!");
-    navigate({ to: "/chamados" });
+    navigate({ to: redirectTo });
   };
 
   const handleSignup = async (e: React.FormEvent) => {

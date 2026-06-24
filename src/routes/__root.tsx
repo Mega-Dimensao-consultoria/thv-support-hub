@@ -87,6 +87,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Sistema de chamados internos do Grupo THV. Abra, acompanhe e gerencie atendimentos das empresas THV Saneamento, Soluções D'água e Soluções Locadora." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/288ab45d-e6ad-4cf3-bfa7-03719aae9a8b/id-preview-e48d2e39--b8d90404-58bd-4c6c-b058-9abc91e01a23.lovable.app-1779544820267.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/288ab45d-e6ad-4cf3-bfa7-03719aae9a8b/id-preview-e48d2e39--b8d90404-58bd-4c6c-b058-9abc91e01a23.lovable.app-1779544820267.png" },
+      { name: "theme-color", content: "#2563eb" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "THV Chamados" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -96,6 +101,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/icon-192.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -124,6 +132,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <ServiceWorkerRegister />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
@@ -138,5 +147,24 @@ function AuthSync() {
     });
     return () => subscription.unsubscribe();
   }, [queryClient]);
+  return null;
+}
+
+function ServiceWorkerRegister() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator)) return;
+    // Não registrar em previews do editor Lovable
+    const host = window.location.hostname;
+    if (
+      host.startsWith('id-preview--') ||
+      host.startsWith('preview--') ||
+      host.endsWith('.lovableproject.com') ||
+      host.endsWith('.lovableproject-dev.com')
+    ) {
+      return;
+    }
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  }, []);
   return null;
 }

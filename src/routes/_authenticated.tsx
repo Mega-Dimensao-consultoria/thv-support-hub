@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { Loader2, Inbox, PlusCircle, Headphones, ShieldCheck, BarChart3, Settings, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PushPrompt } from "@/components/push-prompt";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -14,7 +15,10 @@ function AuthenticatedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login" });
+    if (!loading && !user) {
+      const here = pathname + (typeof window !== 'undefined' ? window.location.search : '');
+      navigate({ to: "/login", search: { redirect: here } as any });
+    }
   }, [loading, user, navigate]);
 
   if (loading || !user) {
@@ -71,6 +75,11 @@ function AuthenticatedLayout() {
               ))}
             </div>
           </div>
+          {user && (
+            <div className="mb-2">
+              <PushPrompt userId={user.id} />
+            </div>
+          )}
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
             <LogOut className="mr-2 h-4 w-4" />Sair
           </Button>
@@ -83,9 +92,12 @@ function AuthenticatedLayout() {
           <div className="h-8 w-8 rounded-md bg-[var(--gradient-brand)] grid place-items-center text-primary-foreground text-sm font-bold">T</div>
           <span className="font-display font-semibold">Grupo THV</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {user && <PushPrompt userId={user.id} compact />}
+          <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <main className="flex-1 md:pl-0 pt-14 md:pt-0 pb-20 md:pb-0">
