@@ -4,13 +4,28 @@ import { FileText } from "lucide-react";
 
 export function AttachmentLink({ value, mine }: { value: string; mine?: boolean }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
-  // Compatibilidade: valores antigos podem ser URLs públicas; novos são apenas o path no bucket
+  // Compatibilidade: valores antigos podem ser URLs absolutas. Por segurança,
+  // só aceitamos URLs do próprio Supabase Storage; qualquer outro host é
+  // tratado como inválido para evitar tracking pixels / exfiltração via Referer.
   const isUrl = /^https?:\/\//i.test(value);
+  let trustedUrl: string | null = null;
+  if (isUrl) {
+    try {
+      const parsed = new URL(value);
+      if (parsed.hostname.endsWith(".supabase.co") || parsed.hostname.endsWith(".supabase.in")) {
+        trustedUrl = parsed.toString();
+      }
+    } catch {
+      trustedUrl = null;
+    }
+  }
 
   useEffect(() => {
     if (isUrl) {
-      setUrl(value);
+      if (trustedUrl) setUrl(trustedUrl);
+      else setError(true);
       return;
     }
     let active = true;
@@ -23,8 +38,9 @@ export function AttachmentLink({ value, mine }: { value: string; mine?: boolean 
     return () => {
       active = false;
     };
-  }, [value, isUrl]);
+  }, [value, isUrl, trustedUrl]);
 
+  if (error) return <span className="text-xs opacity-60">Anexo indisponível</span>;
   if (!url) return <span className="text-xs opacity-60">Carregando anexo…</span>;
 
   const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(value);

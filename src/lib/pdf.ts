@@ -5,6 +5,16 @@ import { ptBR } from "date-fns/locale";
 import { STATUS_LABEL, type ChamadoStatus } from "./status";
 import DOMPurify from "isomorphic-dompurify";
 
+function esc(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface ChamadoPdfInput {
   chamado: {
     protocolo: string | null;
@@ -26,16 +36,16 @@ export async function downloadChamadoPdf({ chamado, respostas, mensagens }: Cham
     <div style="font-family: Inter, sans-serif; padding: 32px; width: 800px; color: #1a1a1a;">
       <div style="border-bottom: 2px solid #1d6da3; padding-bottom: 16px; margin-bottom: 24px;">
         <div style="font-size: 12px; color: #666; letter-spacing: 2px;">GRUPO THV — CENTRAL DE CHAMADOS</div>
-        <h1 style="margin: 8px 0 4px; font-size: 22px;">Protocolo ${chamado.protocolo ?? ""}</h1>
-        <div style="font-size: 14px; color: #555;">${chamado.topicos_suporte?.titulo ?? ""}</div>
+        <h1 style="margin: 8px 0 4px; font-size: 22px;">Protocolo ${esc(chamado.protocolo)}</h1>
+        <div style="font-size: 14px; color: #555;">${esc(chamado.topicos_suporte?.titulo)}</div>
       </div>
 
       <table style="width: 100%; font-size: 12px; margin-bottom: 24px;">
-        <tr><td style="padding: 4px 0; color: #666; width: 35%;">Solicitante</td><td style="padding: 4px 0;">${chamado.solicitante?.nome ?? "—"} (${chamado.solicitante?.email ?? ""})</td></tr>
-        <tr><td style="padding: 4px 0; color: #666;">Empresa</td><td style="padding: 4px 0;">${chamado.empresas?.nome ?? "—"}</td></tr>
-        <tr><td style="padding: 4px 0; color: #666;">Departamento</td><td style="padding: 4px 0;">${chamado.departamentos?.nome ?? "—"}</td></tr>
-        <tr><td style="padding: 4px 0; color: #666;">Atendente</td><td style="padding: 4px 0;">${chamado.atendente?.nome ?? "—"}</td></tr>
-        <tr><td style="padding: 4px 0; color: #666;">Status</td><td style="padding: 4px 0;">${STATUS_LABEL[chamado.status]}</td></tr>
+        <tr><td style="padding: 4px 0; color: #666; width: 35%;">Solicitante</td><td style="padding: 4px 0;">${esc(chamado.solicitante?.nome ?? "—")} (${esc(chamado.solicitante?.email)})</td></tr>
+        <tr><td style="padding: 4px 0; color: #666;">Empresa</td><td style="padding: 4px 0;">${esc(chamado.empresas?.nome ?? "—")}</td></tr>
+        <tr><td style="padding: 4px 0; color: #666;">Departamento</td><td style="padding: 4px 0;">${esc(chamado.departamentos?.nome ?? "—")}</td></tr>
+        <tr><td style="padding: 4px 0; color: #666;">Atendente</td><td style="padding: 4px 0;">${esc(chamado.atendente?.nome ?? "—")}</td></tr>
+        <tr><td style="padding: 4px 0; color: #666;">Status</td><td style="padding: 4px 0;">${esc(STATUS_LABEL[chamado.status])}</td></tr>
         <tr><td style="padding: 4px 0; color: #666;">Criado em</td><td style="padding: 4px 0;">${format(new Date(chamado.data_criacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</td></tr>
         <tr><td style="padding: 4px 0; color: #666;">Atualizado em</td><td style="padding: 4px 0;">${format(new Date(chamado.data_atualizacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</td></tr>
       </table>
@@ -44,8 +54,8 @@ export async function downloadChamadoPdf({ chamado, respostas, mensagens }: Cham
         <h2 style="font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px;">Triagem</h2>
         ${respostas.map((r) => `
           <div style="margin-bottom: 10px; font-size: 12px;">
-            <div style="font-weight: 600;">${r.pergunta_texto}</div>
-            <div style="color: #444;">${r.resposta_texto ?? "—"}</div>
+            <div style="font-weight: 600;">${esc(r.pergunta_texto)}</div>
+            <div style="color: #444;">${esc(r.resposta_texto ?? "—")}</div>
           </div>
         `).join("")}
       ` : ""}
@@ -53,7 +63,7 @@ export async function downloadChamadoPdf({ chamado, respostas, mensagens }: Cham
       <h2 style="font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin: 20px 0 8px;">Histórico de mensagens</h2>
       ${mensagens.map((m) => `
         <div style="margin-bottom: 14px; font-size: 12px;">
-          <div style="color: #666; font-size: 11px;">${m.perfis_usuarios?.nome ?? "Usuário"} — ${format(new Date(m.data_envio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
+          <div style="color: #666; font-size: 11px;">${esc(m.perfis_usuarios?.nome ?? "Usuário")} — ${format(new Date(m.data_envio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
           <div style="background: #f5f7fa; border-radius: 6px; padding: 8px 12px; margin-top: 4px;">${DOMPurify.sanitize(m.mensagem)}</div>
         </div>
       `).join("")}
