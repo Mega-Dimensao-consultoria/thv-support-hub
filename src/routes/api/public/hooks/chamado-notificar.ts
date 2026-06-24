@@ -230,6 +230,13 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
                 ),
               ),
             )
+            const ativos = (perfis ?? []).filter(isActive).map((p: any) => p.id)
+            await sendPush(ativos, {
+              title: `Novo chamado ${chamado.protocolo ?? ''}`.trim(),
+              body: `${solicitante?.nome ?? 'Solicitante'}${empresa?.nome ? ` (${empresa.nome})` : ''}: ${previewFromHtml(chamado.mensagem_inicial, 120)}`,
+              url: `/chamados/${chamado.id}`,
+              tag: `chamado-${chamado.id}`,
+            })
           }
         } else if (body.event === 'atribuido') {
           if (isActive(atendente)) {
@@ -244,6 +251,12 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
               },
               `chamado-atribuido:${chamado.id}:${atendente.id}`,
             )
+            await sendPush([atendente.id], {
+              title: `Chamado atribuído: ${chamado.protocolo ?? ''}`,
+              body: `Você foi designado(a) para atender ${solicitante?.nome ?? 'o solicitante'}.`,
+              url: `/chamados/${chamado.id}`,
+              tag: `chamado-${chamado.id}`,
+            })
           }
         } else if (body.event === 'mensagem') {
           const autorId = body.mensagem_autor_id
@@ -272,6 +285,12 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
               ),
             ),
           )
+          await sendPush(destinatarios.map((p) => p.id), {
+            title: `Nova mensagem · ${chamado.protocolo ?? ''}`,
+            body: `${autorNome}: ${previewFromHtml(body.mensagem_preview, 140)}`,
+            url: `/chamados/${chamado.id}`,
+            tag: `chamado-${chamado.id}-msg`,
+          })
         } else if (body.event === 'status') {
           if (isActive(solicitante)) {
             await enqueueEmail(
@@ -286,6 +305,12 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
               },
               `chamado-status:${chamado.id}:${body.status_novo ?? chamado.status}`,
             )
+            await sendPush([solicitante.id], {
+              title: `Status atualizado · ${chamado.protocolo ?? ''}`,
+              body: `Seu chamado agora está: ${body.status_novo ?? chamado.status}`,
+              url: `/chamados/${chamado.id}`,
+              tag: `chamado-${chamado.id}-status`,
+            })
           }
         } else if (body.event === 'concluido') {
           if (isActive(solicitante)) {
@@ -300,6 +325,12 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
               },
               `chamado-concluido:${chamado.id}`,
             )
+            await sendPush([solicitante.id], {
+              title: `Chamado concluído · ${chamado.protocolo ?? ''}`,
+              body: 'Avalie o atendimento tocando aqui.',
+              url: `/chamados/${chamado.id}`,
+              tag: `chamado-${chamado.id}-done`,
+            })
           }
         }
 
