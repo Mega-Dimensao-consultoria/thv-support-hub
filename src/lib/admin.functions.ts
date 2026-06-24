@@ -141,7 +141,6 @@ export const adminBlockUser = createServerFn({ method: "POST" })
     await supabaseAdmin.from("perfis_usuarios").update({
       bloqueado: data.bloqueado,
       bloqueado_em: data.bloqueado ? new Date().toISOString() : null,
-      bloqueado_por: data.bloqueado ? context.userId : null,
     }).eq("id", data.user_id);
     // Banir/desbanir no Auth para impedir login
     await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
