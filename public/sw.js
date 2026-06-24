@@ -21,13 +21,14 @@ self.addEventListener('push', (event) => {
   }
 
   const title = data.title || 'THV Chamados';
+  const targetUrl = data.url || data.link || '/chamados';
   const options = {
     body: data.body || '',
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-192.png',
     tag: data.tag || undefined,
     renotify: !!data.tag,
-    data: { url: data.url || '/chamados' },
+    data: { url: targetUrl },
     requireInteraction: false,
   };
 
