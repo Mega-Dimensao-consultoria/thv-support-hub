@@ -708,6 +708,7 @@ export type Database = {
           _chamado_id: string
           _event: string
           _mensagem_autor_id?: string
+          _mensagem_id?: string
           _mensagem_preview?: string
           _status_anterior?: string
           _status_novo?: string
