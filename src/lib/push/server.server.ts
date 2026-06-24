@@ -1,20 +1,8 @@
-// Servidor: enviar Web Push usando web-push (Node compat no Worker).
+// Servidor: envia Web Push via @block65/webcrypto-web-push (Workers-native).
 // Carregado dinamicamente para não vazar para o bundle do cliente.
-import webpush from 'web-push';
+import { buildPushPayload } from '@block65/webcrypto-web-push';
 import { createClient } from '@supabase/supabase-js';
-
-let configured = false;
-function ensureConfigured() {
-  if (configured) return;
-  const pub = process.env.VAPID_PUBLIC_KEY;
-  const priv = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT || 'mailto:no-reply@chamados.grupothv.com.br';
-  if (!pub || !priv) {
-    throw new Error('VAPID keys not configured');
-  }
-  webpush.setVapidDetails(subject, pub, priv);
-  configured = true;
-}
+import { VAPID_PUBLIC_KEY } from './vapid';
 
 export interface PushPayload {
   title: string;
@@ -34,10 +22,10 @@ function adminClient() {
 export async function sendPushToUsers(userIds: string[], payload: PushPayload): Promise<void> {
   const ids = Array.from(new Set(userIds.filter(Boolean)));
   if (ids.length === 0) return;
-  try {
-    ensureConfigured();
-  } catch (e) {
-    console.warn('Push not configured', e);
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT || 'mailto:no-reply@chamados.grupothv.com.br';
+  if (!privateKey) {
+    console.warn('VAPID_PRIVATE_KEY not set; skipping push');
     return;
   }
   const supabase = adminClient();
@@ -51,24 +39,38 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
   }
   if (!subs || subs.length === 0) return;
 
-  const json = JSON.stringify(payload);
+  // O service worker espera { title, body, url, tag } — mantemos as duas chaves
+  // url/link por compatibilidade.
+  const data = { ...payload, link: payload.url };
+  const vapid = { subject, publicKey: VAPID_PUBLIC_KEY, privateKey };
   const stale: string[] = [];
 
-  await Promise.all(
+  await Promise.allSettled(
     subs.map(async (s: any) => {
+      const subscription = {
+        endpoint: s.endpoint,
+        expirationTime: null,
+        keys: { p256dh: s.p256dh, auth: s.auth },
+      };
       try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          json,
-          { TTL: 60 * 60 * 24 },
+        const req = await buildPushPayload(
+          { data, options: { ttl: 60 * 60 * 24 } },
+          subscription,
+          vapid,
         );
-      } catch (err: any) {
-        const status = err?.statusCode;
-        if (status === 404 || status === 410) {
+        const res = await fetch(s.endpoint, {
+          method: req.method,
+          headers: req.headers,
+          body: new Uint8Array(req.body) as BodyInit,
+        });
+        if (res.status === 404 || res.status === 410) {
           stale.push(s.id);
-        } else {
-          console.warn('push send failed', status, err?.body);
+        } else if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          console.warn('push send failed', res.status, text.slice(0, 200));
         }
+      } catch (e) {
+        console.warn('push build/send error', e);
       }
     }),
   );
