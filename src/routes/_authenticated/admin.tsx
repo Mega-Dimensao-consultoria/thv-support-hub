@@ -50,7 +50,28 @@ function Departamentos() {
   const [gestorId, setGestorId] = useState("");
   const { data } = useQuery({
     queryKey: ["admin-deptos"],
-    queryFn: async () => (await supabase.from("departamentos").select("id, nome, gestor:perfis_usuarios(nome)").order("nome")).data ?? [],
+    queryFn: async () => {
+      const { data: deps } = await supabase
+        .from("departamentos")
+        .select("id, nome, gestor_departamentos(user_id)")
+        .order("nome");
+      const userIds = Array.from(
+        new Set((deps ?? []).flatMap((d) => (d.gestor_departamentos ?? []).map((g) => g.user_id))),
+      );
+      const nomeById = new Map<string, string>();
+      if (userIds.length) {
+        const { data: perfis } = await supabase
+          .from("perfis_usuarios").select("id, nome").in("id", userIds);
+        (perfis ?? []).forEach((p) => nomeById.set(p.id, p.nome));
+      }
+      return (deps ?? []).map((d) => ({
+        id: d.id,
+        nome: d.nome,
+        gestores: (d.gestor_departamentos ?? [])
+          .map((g) => nomeById.get(g.user_id))
+          .filter(Boolean) as string[],
+      }));
+    },
   });
   const { data: gestores } = useQuery({
     queryKey: ["admin-gestores"],
@@ -64,8 +85,18 @@ function Departamentos() {
 
   const add = async () => {
     if (!nome) return;
-    const { error } = await supabase.from("departamentos").insert({ nome, gestor_id: gestorId || null });
+    const { data: novoDept, error } = await supabase
+      .from("departamentos")
+      .insert({ nome })
+      .select("id")
+      .single();
     if (error) return toast.error(error.message);
+    if (gestorId && novoDept) {
+      const { error: gdErr } = await supabase
+        .from("gestor_departamentos")
+        .insert({ user_id: gestorId, departamento_id: novoDept.id });
+      if (gdErr) return toast.error(gdErr.message);
+    }
     toast.success("Departamento criado");
     setNome(""); setGestorId("");
     qc.invalidateQueries({ queryKey: ["admin-deptos"] });
@@ -94,7 +125,7 @@ function Departamentos() {
             <div key={d.id} className="flex items-center justify-between border-b last:border-0 py-2 text-sm">
               <div>
                 <div className="font-medium">{d.nome}</div>
-                <div className="text-xs text-muted-foreground">Gestor: {d.gestor?.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">Gestor: {d.gestores.length ? d.gestores.join(", ") : "—"}</div>
               </div>
               <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>

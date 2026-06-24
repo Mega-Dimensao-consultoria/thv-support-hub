@@ -45,7 +45,7 @@ function ChamadoDetail() {
         solicitante_id, atendente_id, departamento_id,
         solicitante:perfis_usuarios!chamados_solicitante_id_fkey(id, nome, email, nome_historico, removido),
         atendente:perfis_usuarios!chamados_atendente_id_fkey(id, nome, email, nome_historico, removido),
-        empresas(nome), departamentos(nome, gestor_id), topicos_suporte(titulo)
+        empresas(nome), departamentos(nome), topicos_suporte(titulo)
       `).eq("id", id).single();
       if (error) throw error;
       return data;

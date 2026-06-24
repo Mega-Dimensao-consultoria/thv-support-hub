@@ -196,38 +196,20 @@ export type Database = {
       departamentos: {
         Row: {
           created_at: string
-          gestor_id: string | null
           id: string
           nome: string
         }
         Insert: {
           created_at?: string
-          gestor_id?: string | null
           id?: string
           nome: string
         }
         Update: {
           created_at?: string
-          gestor_id?: string | null
           id?: string
           nome?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "departamentos_gestor_id_fkey"
-            columns: ["gestor_id"]
-            isOneToOne: false
-            referencedRelation: "perfis_usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "departamentos_gestor_id_fkey"
-            columns: ["gestor_id"]
-            isOneToOne: false
-            referencedRelation: "vw_gestao_usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       email_send_log: {
         Row: {
@@ -413,7 +395,6 @@ export type Database = {
         Row: {
           bloqueado: boolean
           bloqueado_em: string | null
-          bloqueado_por: string | null
           created_at: string
           email: string
           empresa_id: string | null
@@ -427,7 +408,6 @@ export type Database = {
         Insert: {
           bloqueado?: boolean
           bloqueado_em?: string | null
-          bloqueado_por?: string | null
           created_at?: string
           email: string
           empresa_id?: string | null
@@ -441,7 +421,6 @@ export type Database = {
         Update: {
           bloqueado?: boolean
           bloqueado_em?: string | null
-          bloqueado_por?: string | null
           created_at?: string
           email?: string
           empresa_id?: string | null
@@ -707,10 +686,6 @@ export type Database = {
       }
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      is_dept_gestor: {
-        Args: { _dept_id: string; _user_id: string }
-        Returns: boolean
-      }
       is_gestor_of_dept: {
         Args: { _dept_id: string; _user_id: string }
         Returns: boolean
