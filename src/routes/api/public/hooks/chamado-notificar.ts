@@ -19,6 +19,7 @@ interface Payload {
   status_novo?: string | null
   mensagem_autor_id?: string | null
   mensagem_preview?: string | null
+  mensagem_id?: string | null
 }
 
 function previewFromHtml(html: string | null | undefined, max = 240): string {
@@ -300,6 +301,11 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
             autorNome,
             mensagemPreview: previewFromHtml(body.mensagem_preview),
           }
+          // Idempotency: use the message ID so retries don't duplicate emails.
+          // mensagem_id is required for 'mensagem' events; refuse otherwise.
+          if (!body.mensagem_id) {
+            return new Response('mensagem_id required for mensagem event', { status: 400 })
+          }
           await Promise.all(
             destinatarios.map((p) =>
               enqueueEmail(
@@ -307,7 +313,7 @@ export const Route = createFileRoute('/api/public/hooks/chamado-notificar')({
                 'chamado-mensagem',
                 p.email,
                 { ...data, destinatarioNome: p.nome },
-                `chamado-mensagem:${chamado.id}:${p.id}:${Date.now()}`,
+                `chamado-mensagem:${body.mensagem_id}:${p.id}`,
               ),
             ),
           )
