@@ -25,7 +25,6 @@ import { Route as AuthenticatedChamadosIdRouteImport } from './routes/_authentic
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as ApiPublicHooksChamadoNotificarRouteImport } from './routes/api/public/hooks/chamado-notificar'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -112,12 +111,6 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksChamadoNotificarRoute =
-  ApiPublicHooksChamadoNotificarRouteImport.update({
-    id: '/api/public/hooks/chamado-notificar',
-    path: '/api/public/hooks/chamado-notificar',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -132,7 +125,6 @@ export interface FileRoutesByFullPath {
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/chamados/': typeof AuthenticatedChamadosIndexRoute
-  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -150,7 +142,6 @@ export interface FileRoutesByTo {
   '/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/chamados': typeof AuthenticatedChamadosIndexRoute
-  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -170,7 +161,6 @@ export interface FileRoutesById {
   '/_authenticated/chamados/novo': typeof AuthenticatedChamadosNovoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/chamados/': typeof AuthenticatedChamadosIndexRoute
-  '/api/public/hooks/chamado-notificar': typeof ApiPublicHooksChamadoNotificarRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -190,7 +180,6 @@ export interface FileRouteTypes {
     | '/chamados/novo'
     | '/lovable/email/suppression'
     | '/chamados/'
-    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -208,7 +197,6 @@ export interface FileRouteTypes {
     | '/chamados/novo'
     | '/lovable/email/suppression'
     | '/chamados'
-    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -227,7 +215,6 @@ export interface FileRouteTypes {
     | '/_authenticated/chamados/novo'
     | '/lovable/email/suppression'
     | '/_authenticated/chamados/'
-    | '/api/public/hooks/chamado-notificar'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -239,7 +226,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
-  ApiPublicHooksChamadoNotificarRoute: typeof ApiPublicHooksChamadoNotificarRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -359,13 +345,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/chamado-notificar': {
-      id: '/api/public/hooks/chamado-notificar'
-      path: '/api/public/hooks/chamado-notificar'
-      fullPath: '/api/public/hooks/chamado-notificar'
-      preLoaderRoute: typeof ApiPublicHooksChamadoNotificarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -401,7 +380,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
-  ApiPublicHooksChamadoNotificarRoute: ApiPublicHooksChamadoNotificarRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
