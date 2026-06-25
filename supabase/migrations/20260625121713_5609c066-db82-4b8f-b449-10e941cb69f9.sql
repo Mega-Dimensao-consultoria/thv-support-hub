@@ -1,0 +1,1 @@
+GRANT SELECT ON public.perfis_usuarios TO authenticated;
