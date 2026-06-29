@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Trash2, Users, ArrowRight, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -20,15 +20,20 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 function Admin() {
   const { roles } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = roles.includes("admin");
   return (
     <div className="container max-w-5xl mx-auto p-4 md:p-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Configurações</h1>
       {isAdmin && (
-        <Link to="/usuarios" className="mb-4 flex items-center justify-between rounded-md border bg-card p-4 hover:bg-accent transition">
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/usuarios" })}
+          className="tappable mb-4 flex w-full items-center justify-between rounded-xl border bg-card p-4 hover:bg-accent text-left"
+        >
           <span className="flex items-center gap-2 font-medium"><Users className="h-4 w-4" /> Gestão de usuários, papéis e bloqueios</span>
           <ArrowRight className="h-4 w-4" />
-        </Link>
+        </button>
       )}
       <Tabs defaultValue="deptos">
         <TabsList>
