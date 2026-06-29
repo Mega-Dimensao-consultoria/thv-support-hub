@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate, Link, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { Loader2, Inbox, PlusCircle, Headphones, ShieldCheck, BarChart3, Settings, LogOut, Users } from "lucide-react";
@@ -57,11 +57,15 @@ function AuthenticatedLayout() {
           {nav.filter((n) => n.show).map((n) => {
             const active = pathname === n.to || (n.to !== "/chamados" && pathname.startsWith(n.to));
             return (
-              <Link key={n.to} to={n.to}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50"}`}>
+              <button
+                type="button"
+                key={n.to}
+                onClick={() => navigate({ to: n.to })}
+                className={`tappable flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-left ${active ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm ring-1 ring-border" : "hover:bg-sidebar-accent/50"}`}
+              >
                 <n.icon className="h-4 w-4" />
                 {n.label}
-              </Link>
+              </button>
             );
           })}
         </nav>
@@ -106,15 +110,19 @@ function AuthenticatedLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t bg-card">
-        <div className="flex overflow-x-auto">
+        <div className="flex overflow-x-auto gap-1 px-1 py-1">
           {nav.filter((n) => n.show).map((n) => {
             const active = pathname === n.to || (n.to !== "/chamados" && pathname.startsWith(n.to));
             return (
-              <Link key={n.to} to={n.to}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`}>
+              <button
+                type="button"
+                key={n.to}
+                onClick={() => navigate({ to: n.to })}
+                className={`tappable flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] shrink-0 ${active ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground"}`}
+              >
                 <n.icon className="h-5 w-5" />
                 <span className="truncate max-w-[60px]">{n.label.split(" ")[0]}</span>
-              </Link>
+              </button>
             );
           })}
         </div>
