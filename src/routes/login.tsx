@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -87,10 +87,10 @@ function LoginPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-muted/30 p-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
+        <button type="button" onClick={() => navigate({ to: "/" })} className="tappable mb-6 flex items-center justify-center gap-2 w-full">
           <div className="h-10 w-10 rounded-lg bg-[var(--gradient-brand)] grid place-items-center text-primary-foreground font-bold">T</div>
           <span className="font-display text-xl font-semibold">Grupo THV</span>
-        </Link>
+        </button>
         <Card className="shadow-[var(--shadow-soft)]">
           <CardHeader>
             <CardTitle>Central de Chamados</CardTitle>
