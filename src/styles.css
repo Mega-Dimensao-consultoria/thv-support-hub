@@ -184,8 +184,6 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out, filter 120ms ease-out;
-}
-@utility tappable {
   &:active {
     transform: scale(0.97);
     filter: brightness(0.97);
