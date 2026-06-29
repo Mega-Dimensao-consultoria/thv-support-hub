@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/aprovacoes")({
 });
 
 function Aprovacoes() {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["aprovacoes"],
     queryFn: async () => {
@@ -38,8 +39,13 @@ function Aprovacoes() {
       ) : (
         <div className="space-y-3">
           {data.map((c) => (
-            <Link key={c.id} to="/chamados/$id" params={{ id: c.id }}>
-              <Card className="p-4 hover:shadow-[var(--shadow-soft)] transition cursor-pointer">
+            <button
+              type="button"
+              key={c.id}
+              onClick={() => navigate({ to: "/chamados/$id", params: { id: c.id } })}
+              className="tappable block w-full text-left"
+            >
+              <Card className="p-4 hover:shadow-[var(--shadow-soft)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -52,7 +58,7 @@ function Aprovacoes() {
                   <span className="text-xs text-muted-foreground">{format(new Date(c.data_criacao), "dd/MM HH:mm")}</span>
                 </div>
               </Card>
-            </Link>
+            </button>
           ))}
         </div>
       )}
