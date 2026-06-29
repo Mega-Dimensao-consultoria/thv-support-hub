@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/chamados/")({
 
 function ChamadosList() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["meus-chamados", user?.id],
     enabled: !!user,
@@ -37,7 +38,7 @@ function ChamadosList() {
           <h1 className="text-2xl md:text-3xl font-bold">Meus chamados</h1>
           <p className="text-sm text-muted-foreground mt-1">Acompanhe o andamento das suas solicitações</p>
         </div>
-        <Link to="/chamados/novo"><Button><PlusCircle className="mr-2 h-4 w-4" />Novo chamado</Button></Link>
+        <Button onClick={() => navigate({ to: "/chamados/novo" })}><PlusCircle className="mr-2 h-4 w-4" />Novo chamado</Button>
       </div>
 
       {isLoading ? (
@@ -47,13 +48,18 @@ function ChamadosList() {
           <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h3 className="font-semibold mb-1">Nenhum chamado ainda</h3>
           <p className="text-sm text-muted-foreground mb-4">Crie seu primeiro chamado para começar.</p>
-          <Link to="/chamados/novo"><Button>Abrir chamado</Button></Link>
+          <Button onClick={() => navigate({ to: "/chamados/novo" })}>Abrir chamado</Button>
         </Card>
       ) : (
         <div className="space-y-3">
           {data.map((c) => (
-            <Link key={c.id} to="/chamados/$id" params={{ id: c.id }}>
-              <Card className="p-4 hover:shadow-[var(--shadow-soft)] transition cursor-pointer">
+            <button
+              type="button"
+              key={c.id}
+              onClick={() => navigate({ to: "/chamados/$id", params: { id: c.id } })}
+              className="tappable block w-full text-left"
+            >
+              <Card className="p-4 hover:shadow-[var(--shadow-soft)]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -68,7 +74,7 @@ function ChamadosList() {
                   </div>
                 </div>
               </Card>
-            </Link>
+            </button>
           ))}
         </div>
       )}

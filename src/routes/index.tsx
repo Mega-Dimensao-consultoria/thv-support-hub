@@ -1,5 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
   const { data: settings } = useQuery({
     queryKey: ["site-settings-public"],
     queryFn: async () => {
@@ -27,7 +27,7 @@ function Index() {
             <div className="h-9 w-9 rounded-lg bg-[var(--gradient-brand)] grid place-items-center text-primary-foreground font-bold">T</div>
             <span className="font-display text-lg font-semibold">Grupo THV</span>
           </div>
-          <Link to="/login"><Button variant="ghost">Entrar</Button></Link>
+          <Button variant="ghost" onClick={() => navigate({ to: "/login" })}>Entrar</Button>
         </div>
       </header>
 
@@ -41,11 +41,9 @@ function Index() {
             {t("hero_subtitle", "Abra chamados, acompanhe tratativas em tempo real e avalie atendimentos — para todas as empresas do grupo.")}
           </p>
           <div className="mt-10 flex justify-center">
-            <Link to="/login">
-              <Button size="lg" className="h-14 px-8 text-base shadow-[var(--shadow-soft)]">
-                {t("hero_cta", "Abrir Chamado")} <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button size="lg" onClick={() => navigate({ to: "/login" })} className="h-14 px-8 text-base shadow-[var(--shadow-soft)]">
+              {t("hero_cta", "Abrir Chamado")} <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>
