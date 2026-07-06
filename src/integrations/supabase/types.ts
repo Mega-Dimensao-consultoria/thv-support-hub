@@ -666,6 +666,10 @@ export type Database = {
       }
     }
     Functions: {
+      atendente_can_view_profile: {
+        Args: { _profile: string; _viewer: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
